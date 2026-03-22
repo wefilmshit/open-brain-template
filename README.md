@@ -6,6 +6,14 @@ Built on Supabase + Vercel. Works with Claude Code, Claude Desktop, ChatGPT, or 
 
 ![Brain Map](https://img.shields.io/badge/memories-263-purple) ![Auth](https://img.shields.io/badge/auth-Google_OAuth-blue) ![Deploy](https://img.shields.io/badge/deploy-Vercel-black)
 
+## Screenshots
+
+### 🧠 Brain Map — Visual Memory Hierarchy
+![Brain Map](brain-map.png)
+
+### ✏️ Editor — Priority-Based Memory Files
+![Editor](editor.png)
+
 ## Features
 
 **Brain Map** — Visual tree showing memory hierarchy across 3 tiers:
