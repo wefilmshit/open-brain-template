@@ -1,0 +1,367 @@
+// orchestrator.js
+//
+// Memory Steward orchestrator. Drives Anthropic Managed Agent sessions
+// against the Memory Steward agent (created Apr 20 2026, YOUR_MEMORY_STEWARD_AGENT_ID).
+// Listens to the SSE event stream, executes the agent's 5 custom tool calls
+// (recall_smart, recent, remember, forget, stats) against the Supabase
+// memory-api edge function, and returns the agent's synthesized final response
+// to the caller.
+//
+// This module is consumed by the new POST /memory/query route in server.js.
+// The existing MCP routes (/mcp POST/GET/DELETE) stay alive for backward
+// compatibility with current consumers (Claude Desktop, ChatGPT) until they
+// migrate to the new memory_query tool exposed by the Phase D MCP bridge.
+//
+// Reference pattern: trigger-workers/src/trigger/ep-brain-managed-agent.ts in
+// the Adopt A Director repo (production, has been running EP Brain since Mar 2026).
+// Same SSE event types, same custom_tool_use / user.custom_tool_result protocol,
+// same session lifecycle. Copied carefully — including the unknown-event-id ack
+// safeguard that prevents the "waiting on responses to events" failure mode.
+
+const ANTHROPIC_API = "https://api.anthropic.com/v1";
+const ANTHROPIC_BETA = "managed-agents-2026-04-01";
+const ANTHROPIC_VERSION = "2023-06-01";
+
+const STEWARD_AGENT_ID =
+  process.env.MEMORY_STEWARD_AGENT_ID || "YOUR_MEMORY_STEWARD_AGENT_ID";
+const STEWARD_ENV_ID =
+  process.env.MEMORY_STEWARD_ENVIRONMENT_ID || "YOUR_ENVIRONMENT_ID";
+
+// Cap a single query at 90 seconds wall-clock. The agent does smart recall in
+// 1-3 iterations of parallel tool calls, plus the final response generation.
+// Anything past 90s is almost certainly a stuck loop or upstream stall.
+const QUERY_TIMEOUT_MS = 90_000;
+
+// Hard cap on how many tool-iteration rounds we accept before aborting.
+// The system prompt encourages parallelism, so 8 rounds is generous.
+const MAX_ITERATIONS = 8;
+
+// Truncate any single tool result to this size before sending it back to
+// Anthropic. Keeps the agent's context window from blowing up on large
+// recent() / recall_smart() returns.
+const MAX_TOOL_RESULT_CHARS = 24_000;
+
+function anthropicHeaders(apiKey) {
+  return {
+    "x-api-key": apiKey,
+    "anthropic-version": ANTHROPIC_VERSION,
+    "anthropic-beta": ANTHROPIC_BETA,
+    "content-type": "application/json",
+  };
+}
+
+// ── Custom tool execution ─────────────────────────────────────────────────
+//
+// Each Memory Steward tool maps onto one or two existing memory-api routes.
+// The callMemoryAPI function is passed in from server.js so we reuse the
+// same Supabase auth + URL handling that the MCP routes already use.
+
+async function executeStewardTool(toolName, toolInput, callMemoryAPI) {
+  switch (toolName) {
+    case "recall_smart": {
+      // Semantic search via Mem0. Re-ranking happens in the agent itself
+      // via its system prompt, not here — the orchestrator just returns
+      // raw semantic results.
+      const result = await callMemoryAPI("/search", "POST", {
+        query: toolInput.query,
+        category: toolInput.category || null,
+        limit: Math.min(toolInput.limit || 10, 50),
+        threshold: 0.0,
+      });
+      return JSON.stringify(result);
+    }
+
+    case "recent": {
+      const params = new URLSearchParams();
+      params.set("limit", String(Math.min(toolInput.limit || 20, 100)));
+      if (toolInput.category) params.set("category", toolInput.category);
+      const result = await callMemoryAPI(`/recent?${params}`);
+      return JSON.stringify(result);
+    }
+
+    case "remember": {
+      const result = await callMemoryAPI("/add", "POST", {
+        content: toolInput.content,
+        summary: toolInput.summary,
+        category: toolInput.category || "general",
+        source: "memory-steward",
+        tags: toolInput.tags || [],
+      });
+      return JSON.stringify(result);
+    }
+
+    case "forget": {
+      const result = await callMemoryAPI(`/${toolInput.id}`, "DELETE");
+      return JSON.stringify(result);
+    }
+
+    case "stats": {
+      const result = await callMemoryAPI("/stats");
+      return JSON.stringify(result);
+    }
+
+    default:
+      return JSON.stringify({ error: `Unknown Memory Steward tool: ${toolName}` });
+  }
+}
+
+function truncateToolResult(result, toolName) {
+  if (result.length <= MAX_TOOL_RESULT_CHARS) return result;
+  console.warn(
+    `[steward] ${toolName}: truncating result from ${result.length} to ${MAX_TOOL_RESULT_CHARS} chars`
+  );
+  return (
+    result.slice(0, MAX_TOOL_RESULT_CHARS) +
+    `\n\n[truncated by orchestrator at ${MAX_TOOL_RESULT_CHARS} chars]`
+  );
+}
+
+// ── SSE parser ────────────────────────────────────────────────────────────
+//
+// Anthropic's session event stream is text/event-stream with one event per
+// "data: {...}" line. Yields parsed JSON objects.
+
+async function* parseSSE(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    buffer += decoder.decode(value, { stream: true });
+
+    while (buffer.includes("\n")) {
+      const idx = buffer.indexOf("\n");
+      const line = buffer.slice(0, idx).trim();
+      buffer = buffer.slice(idx + 1);
+      if (line.startsWith("data: ")) {
+        try {
+          yield JSON.parse(line.slice(6));
+        } catch {
+          console.warn(`[steward] SSE malformed data line: ${line.slice(0, 100)}`);
+        }
+      }
+    }
+  }
+}
+
+// ── Session lifecycle ─────────────────────────────────────────────────────
+
+async function createSession(apiKey, title) {
+  const resp = await fetch(`${ANTHROPIC_API}/sessions?beta=true`, {
+    method: "POST",
+    headers: anthropicHeaders(apiKey),
+    body: JSON.stringify({
+      agent: STEWARD_AGENT_ID,
+      environment_id: STEWARD_ENV_ID,
+      title: title || "Memory Steward query",
+    }),
+  });
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`Session create failed (${resp.status}): ${text.slice(0, 300)}`);
+  }
+  return await resp.json();
+}
+
+async function deleteSession(apiKey, sessionId) {
+  try {
+    await fetch(`${ANTHROPIC_API}/sessions/${sessionId}?beta=true`, {
+      method: "DELETE",
+      headers: anthropicHeaders(apiKey),
+    });
+  } catch (e) {
+    console.warn(`[steward] DELETE session ${sessionId} failed: ${e.message}`);
+  }
+}
+
+// ── Main entry point ──────────────────────────────────────────────────────
+//
+// runStewardQuery: send a single user message to a fresh Memory Steward
+// session, drive the tool-use loop until the agent emits end_turn, return
+// the synthesized response.
+
+export async function runStewardQuery({ query, hint, callMemoryAPI }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY env var is required for Memory Steward queries");
+  }
+  if (!query || typeof query !== "string") {
+    throw new Error("query is required and must be a string");
+  }
+
+  const turnStart = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
+
+  let sessionId = null;
+  const toolCallsSummary = [];
+
+  try {
+    // 1. Create session
+    const session = await createSession(apiKey, `Steward: ${query.slice(0, 60)}`);
+    sessionId = session.id;
+    console.log(`[steward] session ${sessionId} created in ${Date.now() - turnStart}ms`);
+
+    // 2. Open SSE stream
+    const streamResp = await fetch(
+      `${ANTHROPIC_API}/sessions/${sessionId}/events/stream?beta=true`,
+      {
+        headers: { ...anthropicHeaders(apiKey), Accept: "text/event-stream" },
+        signal: controller.signal,
+      }
+    );
+    if (!streamResp.ok) {
+      const text = await streamResp.text();
+      throw new Error(`Stream open failed (${streamResp.status}): ${text.slice(0, 300)}`);
+    }
+
+    // 3. Send user message (combine query + hint into one text block)
+    const userText = hint ? `${query}\n\n[caller hint: ${hint}]` : query;
+    const msgResp = await fetch(`${ANTHROPIC_API}/sessions/${sessionId}/events?beta=true`, {
+      method: "POST",
+      headers: anthropicHeaders(apiKey),
+      body: JSON.stringify({
+        events: [{ type: "user.message", content: [{ type: "text", text: userText }] }],
+      }),
+      signal: controller.signal,
+    });
+    if (!msgResp.ok) {
+      const text = await msgResp.text();
+      throw new Error(`Message send failed (${msgResp.status}): ${text.slice(0, 300)}`);
+    }
+
+    // 4. Drive event loop
+    const eventsById = {};
+    let agentOutput = "";
+    let iterations = 0;
+    let done = false;
+
+    for await (const event of parseSSE(streamResp)) {
+      if (Date.now() - turnStart > QUERY_TIMEOUT_MS) {
+        console.error(`[steward] TIMEOUT at ${QUERY_TIMEOUT_MS}ms, aborting`);
+        controller.abort();
+        break;
+      }
+
+      switch (event.type) {
+        case "agent.custom_tool_use":
+          eventsById[event.id] = event;
+          break;
+
+        case "agent.message":
+          if (Array.isArray(event.content)) {
+            for (const block of event.content) {
+              if (block.type === "text") agentOutput += block.text;
+            }
+          }
+          break;
+
+        case "session.status_idle": {
+          const sr = event.stop_reason;
+          if (sr?.type === "requires_action") {
+            if (++iterations > MAX_ITERATIONS) {
+              console.warn(`[steward] hit MAX_ITERATIONS (${MAX_ITERATIONS}), forcing exit`);
+              done = true;
+              break;
+            }
+
+            // Respond to every event_id in stop_reason.event_ids, even ones we
+            // never saw a custom_tool_use for (race condition guard from EP Brain).
+            const toolEvents = (sr.event_ids || []).map((eid) => ({
+              eid,
+              te: eventsById[eid],
+            }));
+            const known = toolEvents.filter((x) => x.te);
+            const unknown = toolEvents.filter((x) => !x.te);
+            if (unknown.length > 0) {
+              console.warn(
+                `[steward] ${unknown.length} event_ids had no captured custom_tool_use; acking with empty results`
+              );
+            }
+
+            const knownResults = await Promise.all(
+              known.map(async ({ eid, te }) => {
+                const start = Date.now();
+                try {
+                  const raw = await executeStewardTool(te.name, te.input || {}, callMemoryAPI);
+                  const truncated = truncateToolResult(raw, te.name);
+                  toolCallsSummary.push({
+                    name: te.name,
+                    input: te.input,
+                    duration_ms: Date.now() - start,
+                    result_chars: truncated.length,
+                  });
+                  return { eid, result: truncated };
+                } catch (err) {
+                  console.error(`[steward] tool ${te.name} failed: ${err.message}`);
+                  return {
+                    eid,
+                    result: JSON.stringify({ error: err.message }),
+                  };
+                }
+              })
+            );
+            const unknownResults = unknown.map(({ eid }) => ({
+              eid,
+              result: JSON.stringify({
+                error: "tool_use event was not captured in time",
+              }),
+            }));
+            const allResults = [...knownResults, ...unknownResults];
+
+            const batchResp = await fetch(
+              `${ANTHROPIC_API}/sessions/${sessionId}/events?beta=true`,
+              {
+                method: "POST",
+                headers: anthropicHeaders(apiKey),
+                body: JSON.stringify({
+                  events: allResults.map(({ eid, result }) => ({
+                    type: "user.custom_tool_result",
+                    custom_tool_use_id: eid,
+                    content: [{ type: "text", text: result }],
+                  })),
+                }),
+                signal: controller.signal,
+              }
+            );
+            if (!batchResp.ok) {
+              const text = await batchResp.text();
+              throw new Error(`Batch tool results failed (${batchResp.status}): ${text}`);
+            }
+          } else if (sr?.type === "end_turn") {
+            done = true;
+          } else {
+            console.warn(`[steward] unknown stop_reason: ${JSON.stringify(sr)}`);
+          }
+          break;
+        }
+
+        case "session.status_terminated":
+          throw new Error("Memory Steward session terminated unexpectedly");
+
+        default:
+          // Ignore other event types; they're informational
+          break;
+      }
+
+      if (done) break;
+    }
+
+    return {
+      ok: true,
+      response: agentOutput.trim(),
+      session_id: sessionId,
+      tool_calls: toolCallsSummary,
+      iterations,
+      duration_ms: Date.now() - turnStart,
+    };
+  } finally {
+    clearTimeout(timer);
+    if (sessionId) {
+      // Fire-and-forget cleanup to stop server-side billing.
+      deleteSession(apiKey, sessionId).catch(() => {});
+    }
+  }
+}
