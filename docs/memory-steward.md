@@ -205,3 +205,16 @@ your-mcp-server: tool memory_query called
   → orchestrator deleted session, returned response
 your-mcp-server: tool memory_query returned (32s, 5 tool calls, 3 iterations)
 ```
+
+## Roadmap
+
+### Periodic decay audit (planned)
+
+Every `memory_query` call spins up an Anthropic Managed Agent session, and Anthropic retains the full conversation trace (prompt, tool calls, intermediate results, final response) per session. That means the Steward's reasoning is already logged end-to-end, we just don't replay it systematically yet.
+
+Retrieval quality decays over time. New memories shift the embedding neighborhood, stale facts drift out of context, and a query that returned the right answer in April may return a near-miss six months later as the bank grows.
+
+Planned fix: a small audit job that samples historical `memory_query` sessions, re-runs each query against the current memory state, diffs the synthesized answer, and flags drift. Runs weekly, surfaces regressions, and suggests candidate memories to prune or re-rank.
+
+Raised by Myles Bryning (Substack, April 2026). Good catch, adding it to the build list.
+
