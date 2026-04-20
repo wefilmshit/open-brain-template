@@ -206,15 +206,20 @@ your-mcp-server: tool memory_query called
 your-mcp-server: tool memory_query returned (32s, 5 tool calls, 3 iterations)
 ```
 
-## Roadmap
+## Decay audit (shipped, April 2026)
 
-### Periodic decay audit (planned)
+Every `memory_query` call spins up an Anthropic Managed Agent session, and Anthropic retains the full conversation trace (prompt, tool calls, intermediate results, final response) per session. The Steward's reasoning is already logged end-to-end — the audit just replays canonical queries and diffs the cited memory IDs over time.
 
-Every `memory_query` call spins up an Anthropic Managed Agent session, and Anthropic retains the full conversation trace (prompt, tool calls, intermediate results, final response) per session. That means the Steward's reasoning is already logged end-to-end, we just don't replay it systematically yet.
+Retrieval quality decays as the bank grows. New memories shift the embedding neighborhood, stale facts drift out of context, and a query that returned the right answer in April may return a near-miss six months later.
 
-Retrieval quality decays over time. New memories shift the embedding neighborhood, stale facts drift out of context, and a query that returned the right answer in April may return a near-miss six months later as the bank grows.
+Live pieces:
 
-Planned fix: a small audit job that samples historical `memory_query` sessions, re-runs each query against the current memory state, diffs the synthesized answer, and flags drift. Runs weekly, surfaces regressions, and suggests candidate memories to prune or re-rank.
+- `audit/decay-audit.js` — runner that hits `POST /memory/query` with a canonical query list, extracts cited memory IDs from the response, and writes a timestamped snapshot.
+- `audit/canonical-queries.json` — the fixed query list whose answers should not change week to week.
+- `audit/results/` — timestamped snapshots, one per run. First baseline: `2026-04-20.json`.
+- `.github/workflows/decay-audit.yml` — GitHub Actions cron that runs every Monday 13:00 UTC, commits the new snapshot, and surfaces failures as repo notifications.
 
-Raised by Myles Bryning (Substack, April 2026). Good catch, adding it to the build list.
+Drift detection is a Jaccard overlap on the cited memory IDs across consecutive snapshots, plus per-query added/removed ID lists. See [audit/README.md](../audit/README.md) for interpretation.
+
+Raised by Myles Bryning (Substack, April 2026). Good catch — shipped the same day.
 
