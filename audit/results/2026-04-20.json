@@ -1,83 +1,87 @@
 {
   "run_date": "2026-04-20",
-  "timestamp": "2026-04-20T14:33:53.137Z",
+  "timestamp": "2026-04-20T14:38:11.525Z",
   "mcp_url": "https://personal-memory-mcp-http-production.up.railway.app",
   "query_count": 6,
-  "ok_count": 6,
+  "ok_count": 5,
   "results": [
     {
       "query": "how does Memory Steward work and what problem does it solve",
       "hint": "architecture self-check",
       "ok": true,
-      "response": "**Memory Steward is a specialized Claude session that manages Tony's long-term memory store for the main coding/task agent.**\n\n## Problem it solves\n\nThe main agent (the one Tony talks to) is stateless between conversations. Without persistent memory:\n- Tony would re-explain WFS context, director rosters, project decisions, personal setup every session\n- The agent would repeat solved problems, forget past failures, miss institutional knowledge\n- 800+ memories would return noisy semantic matches without smart filtering\n\n## How it works\n\n**Architecture:**\n- Bank lives in MCP memory server (external to both Claude sessions)\n- Main agent calls me via tool when it needs to recall or save\n- I run semantic search, reformulate queries, re-rank by actual relevance to the caller's task\n- I filter out stale/duplicate/off-topic results before returning to caller\n- Before saving, I dedup-check to prevent redundant entries\n\n**Key design choices:**\n- Separate session so main agent doesn't burn context window on memory management\n- Hint parameter lets caller explain their real task, not just surface query, for better relevance filtering\n- Parallel query support because one phrasing often misses relevant memories\n- Ruthless filtering: better three tight results than ten noisy ones\n- Category system (wfs, personal, director, project, contact, technical, general) for scoped search\n\n**Value proposition:**\nI'm the librarian. Semantic search returns books with matching words. I return the three books that actually answer your question.",
+      "response": "**Memory Steward architecture and purpose:**\n\n**Problem solved:**\nTony's memory bank holds 800+ entries. Raw semantic search returns many matches, but most are noise. Without filtering, callers get buried in irrelevant results. You need a curator that understands context, finds the right memories, and returns only what matters for the actual task.\n\n**How it works:**\n\n**Input layer:**\n- Caller sends query + optional hint about their actual task\n- Hint lets me re-rank by usefulness to the goal, not just embedding similarity\n\n**Retrieval strategy:**\n- Cast multiple parallel queries with different phrasings when one angle isn't enough\n- Pull raw results (default 10, can go to 50)\n- Re-rank by relevance to caller's actual task\n- Filter out stale, duplicate, contradicted, or off-topic entries\n\n**Output layer:**\n- Return tight, filtered set (3 good matches > 10 noisy ones)\n- Cite memory IDs (first 8 chars) so caller can reference specific entries\n- One header line, then bullets: [category] (id-prefix) summary\n\n**Dedup on write:**\n- Before saving new memory, ALWAYS run recall_smart with the proposed summary\n- If similar entry exists, skip save unless new one adds material info\n- Flag the dedup decision explicitly\n\n**Key difference from raw search:**\nRaw vector search ranks by embedding distance. I rank by *usefulness to the caller's actual task*. That's the value add.",
       "memory_ids": [],
       "iterations": 0,
-      "server_duration_ms": 19059,
-      "total_duration_ms": 19385,
-      "session_id": "sesn_011CaFBs4iseU9HjJrBEKKM5",
+      "server_duration_ms": 20121,
+      "total_duration_ms": 20718,
+      "session_id": "sesn_011CaFCC8eYXJ4bQx5stetb8",
       "error": null
     },
     {
       "query": "what is the session start checklist an AI agent should follow",
       "hint": "process check",
       "ok": true,
-      "response": "No documented session start checklist exists in the memory bank.",
-      "memory_ids": [],
-      "iterations": 2,
-      "server_duration_ms": 32663,
-      "total_duration_ms": 32910,
-      "session_id": "sesn_011CaFBtVQhsDcEtqCPXUbhv",
+      "response": "Found one highly relevant memory.\n\n**[technical] (bb8c8b65)** AI Agent Operational Safety Doctrine — 5 Core Skills + Implementation Checklist\n\nThis memory contains a comprehensive session start and operational framework for AI agents. The 5 core skills are:\n\n1. **Version Control (Git)** — Commit before asking agent for next change, never go >30 minutes without committing, commit BEFORE any destructive task\n\n2. **Context Window Management** — Start new conversations for distinct tasks, restart after ~30 messages with summary, use screenshots instead of text descriptions to preserve context\n\n3. **Rules File (CLAUDE.md)** — Agent persistent memory across sessions, grow it from actual problems not theory, keep institutional knowledge and prevent repeated mistakes\n\n4. **Blast Radius & Task Decomposition** — Map affected files/tables before tasks affecting 1,000+ items, break into small testable steps, commit between each step, stop if agent runs >5 minutes without showing progress\n\n5. **Security, Error Handling, Scale** — Audit RLS, never paste secrets in conversations, add try/catch + logging for API failures, build for scale from start\n\nThe key reframe: you're a project manager for an autonomous worker, not a developer. Focus on process discipline, judgment, supervision, and knowing when to stop and check.",
+      "memory_ids": [
+        "bb8c8b65"
+      ],
+      "iterations": 3,
+      "server_duration_ms": 45671,
+      "total_duration_ms": 46042,
+      "session_id": "sesn_011CaFCDeCa8StYMu6YPgWp4",
       "error": null
     },
     {
       "query": "how does Mem0 enhance pgvector for memory recall",
       "hint": "architecture check",
       "ok": true,
-      "response": "No relevant memories found on Mem0, pgvector, or their interaction in the technical architecture.\n\nThe bank does not contain information about how Mem0 enhances pgvector for memory recall.",
-      "memory_ids": [],
-      "iterations": 4,
-      "server_duration_ms": 26077,
-      "total_duration_ms": 26309,
-      "session_id": "sesn_011CaFBvvrDYenJAR367zaRH",
+      "response": "No memory found matching Mem0 + pgvector integration.\n\nBank holds one technical entry about pgvector embedding upgrades (4c437445), but nothing about Mem0 as a layer or enhancement on top of pgvector.\n\nIf Mem0 is a planned or newly integrated component, no record exists yet.",
+      "memory_ids": [
+        "4c437445"
+      ],
+      "iterations": 2,
+      "server_duration_ms": 18763,
+      "total_duration_ms": 19276,
+      "session_id": "sesn_011CaFCH3k1PoYE1VDJX5aor",
       "error": null
     },
     {
       "query": "what are the priority load levels P1 P2 P3 P4 for memory files",
       "hint": "process check",
-      "ok": true,
-      "response": "No matches found for P1/P2/P3/P4 priority load levels in the memory bank. This system or process is not documented here.",
+      "ok": false,
+      "response": null,
       "memory_ids": [],
-      "iterations": 3,
-      "server_duration_ms": 24415,
-      "total_duration_ms": 24695,
-      "session_id": "sesn_011CaFBxryrNkhXgZDRfPreS",
-      "error": null
+      "iterations": null,
+      "server_duration_ms": null,
+      "total_duration_ms": 20167,
+      "session_id": null,
+      "error": "Batch tool results failed (400): {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid user.custom_tool_result event at events[0]: waiting on responses to events [sevt_01TSnFztajLhKfh2Wr1WaRMn]; only `user.tool_confirmation`, `user.custom_tool_result`, or `user.interrupt` may be sent\"},\"request_id\":\"req_011CaFCKskKZKh9We5WcEWr2\"}"
     },
     {
       "query": "what is the refresh pattern and why is it needed in long AI sessions",
       "hint": "process check",
       "ok": true,
-      "response": "No relevant memories found.\n\nThe concept of a \"refresh pattern\" for long AI sessions is not documented in the memory bank. This appears to be a procedural or technical pattern you use but haven't stored yet.\n\nIf you'd like to explain what the refresh pattern is and why it's needed, I can save that for future reference.",
+      "response": "No memories found for refresh pattern or long AI session management.\n\nThis topic isn't documented in the memory bank yet. If this is a process you use or want to establish, I can store it once you explain what it is.",
       "memory_ids": [],
-      "iterations": 2,
-      "server_duration_ms": 17975,
-      "total_duration_ms": 18380,
-      "session_id": "sesn_011CaFBzh3MyFnSFWXgWde56",
+      "iterations": 3,
+      "server_duration_ms": 24216,
+      "total_duration_ms": 24636,
+      "session_id": "sesn_011CaFCKwp9tSnfZRmLNuaH6",
       "error": null
     },
     {
       "query": "what is the open brain dashboard and what does it do",
       "hint": "product self-check",
       "ok": true,
-      "response": "Found two matches on Open Brain dashboard.\n\n**[technical] (6709164a) Open Brain is the UI for managing memory files stored in Supabase.**\n\nCore functionality:\n- Full CRUD: view, edit, create, delete all memory files\n- Browse by category (wfs, personal, director, project, contact, technical, general, memory-file)\n- Search memories\n- View memory content with frontmatter (name, description, type, tags)\n\n**Architecture:**\n- URL: brain.wfs.productions (also open-brain-one.vercel.app)\n- Backend: Supabase edge function `memory-api` with routes for recall, remember, update, forget, recent, stats\n- Auth: Google OAuth (tony@wefilmshit.com, ai@wefilmshit.com, tonyfinley7@gmail.com allowed)\n- Embedding: 768-dim Gemini embeddings for semantic search\n\n**Source of truth:**\n- Supabase `memories` table is THE canonical store\n- Local .md files are offline backups only (one-way sync FROM Supabase)\n- Shared with Claude Desktop, Claude Code (MCP), ChatGPT (Custom GPT Actions)\n\n**[technical] (586c0ccb) OAuth switched from password in March 2026; domain configured at brain.wfs.productions.**",
+      "response": "Found two relevant memories about Open Brain.\n\n**Open Brain Dashboard is a web UI for managing Tony's memory bank stored in Supabase.**\n\n- [technical] (6709164a) Hosted at brain.wfs.productions (also open-brain-one.vercel.app). Full CRUD interface for memory files: view, edit, create, delete. Browse by category, search semantically. Connects to Supabase via memory-api edge function. Supabase memories table is source of truth; local .md files are offline backups only.\n\n- [technical] (586c0ccb) Uses Google OAuth (Supabase Auth) for login. Allowed emails: tony@wefilmshit.com, ai@wefilmshit.com, tonyfinley7@gmail.com. Domain CNAME set on GoDaddy. Also has a Brain Map visual tree tab.",
       "memory_ids": [
         "6709164a",
         "586c0ccb"
       ],
       "iterations": 2,
-      "server_duration_ms": 24672,
-      "total_duration_ms": 24900,
-      "session_id": "sesn_011CaFC236e2B3bY2bN6R6Am",
+      "server_duration_ms": 25649,
+      "total_duration_ms": 26071,
+      "session_id": "sesn_011CaFCMmmTJjvieeLkaFiXe",
       "error": null
     }
   ]
