@@ -1,26 +1,26 @@
 [
   {
-    "query": "how does Memory Steward work and what problem does it solve",
-    "hint": "architecture self-check"
+    "query": "what command does Tony use to deploy Supabase edge functions",
+    "hint": "concrete operational recall, should cite specific deploy command memory"
   },
   {
-    "query": "what is the session start checklist an AI agent should follow",
-    "hint": "process check"
+    "query": "what are the critical rules for working with Tony given his ADHD and dyslexia",
+    "hint": "P1 rules, should cite multiple rule memories"
   },
   {
-    "query": "how does Mem0 enhance pgvector for memory recall",
-    "hint": "architecture check"
+    "query": "what is the troubleshooting playbook when something breaks",
+    "hint": "P1 rules, should cite the troubleshooting playbook memory"
   },
   {
-    "query": "what are the priority load levels P1 P2 P3 P4 for memory files",
-    "hint": "process check"
+    "query": "what are the project guardrails around publicly using ICE and Tony being EP not a rep",
+    "hint": "P1 guardrails, should cite the project guardrails memory"
   },
   {
-    "query": "what is the refresh pattern and why is it needed in long AI sessions",
-    "hint": "process check"
+    "query": "what are the technical gotchas around reanalysis version and HLS that keep getting repeated",
+    "hint": "should cite the gotchas memory"
   },
   {
-    "query": "what is the open brain dashboard and what does it do",
-    "hint": "product self-check"
+    "query": "how does the Memory Steward Managed Agent work and what agent id does it use",
+    "hint": "recent architecture memory from April 2026"
   }
 ]

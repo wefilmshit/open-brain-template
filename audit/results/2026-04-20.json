@@ -1,87 +1,93 @@
 {
   "run_date": "2026-04-20",
-  "timestamp": "2026-04-20T14:38:11.525Z",
+  "timestamp": "2026-04-20T15:01:35.771Z",
   "mcp_url": "https://personal-memory-mcp-http-production.up.railway.app",
   "query_count": 6,
-  "ok_count": 5,
+  "ok_count": 6,
   "results": [
     {
-      "query": "how does Memory Steward work and what problem does it solve",
-      "hint": "architecture self-check",
+      "query": "what command does Tony use to deploy Supabase edge functions",
+      "hint": "concrete operational recall, should cite specific deploy command memory",
       "ok": true,
-      "response": "**Memory Steward architecture and purpose:**\n\n**Problem solved:**\nTony's memory bank holds 800+ entries. Raw semantic search returns many matches, but most are noise. Without filtering, callers get buried in irrelevant results. You need a curator that understands context, finds the right memories, and returns only what matters for the actual task.\n\n**How it works:**\n\n**Input layer:**\n- Caller sends query + optional hint about their actual task\n- Hint lets me re-rank by usefulness to the goal, not just embedding similarity\n\n**Retrieval strategy:**\n- Cast multiple parallel queries with different phrasings when one angle isn't enough\n- Pull raw results (default 10, can go to 50)\n- Re-rank by relevance to caller's actual task\n- Filter out stale, duplicate, contradicted, or off-topic entries\n\n**Output layer:**\n- Return tight, filtered set (3 good matches > 10 noisy ones)\n- Cite memory IDs (first 8 chars) so caller can reference specific entries\n- One header line, then bullets: [category] (id-prefix) summary\n\n**Dedup on write:**\n- Before saving new memory, ALWAYS run recall_smart with the proposed summary\n- If similar entry exists, skip save unless new one adds material info\n- Flag the dedup decision explicitly\n\n**Key difference from raw search:**\nRaw vector search ranks by embedding distance. I rank by *usefulness to the caller's actual task*. That's the value add.",
+      "response": "**Tony uses:**\n\n```\nsupabase functions deploy --project-ref inqwtstopucpxfnuisus\n```\n\nwith token passed inline:\n```\nSUPABASE_ACCESS_TOKEN=$(cat ~/.supabase_access_token) supabase functions deploy <function-name> --project-ref inqwtstopucpxfnuisus\n```\n\n**Public-facing functions** (track-visitor, track-reel-view, verify-reel-password, activate-director, mux-webhook) require `--no-verify-jwt` flag or they'll reject requests with 401.\n\nFunction files written to `/tmp/supabase-deploy/supabase/functions/<name>/index.ts`, never local project folders (those are reference only).\n\nToken name: \"Claude Code 4\", stored at `~/.supabase_access_token`.\n\n(41019b03, 481bfedc, 6d93b6a3)",
       "memory_ids": [],
-      "iterations": 0,
-      "server_duration_ms": 20121,
-      "total_duration_ms": 20718,
-      "session_id": "sesn_011CaFCC8eYXJ4bQx5stetb8",
+      "iterations": 1,
+      "server_duration_ms": 26275,
+      "total_duration_ms": 26589,
+      "session_id": "sesn_011CaFDydiPV1XBvNarpBRHU",
       "error": null
     },
     {
-      "query": "what is the session start checklist an AI agent should follow",
-      "hint": "process check",
+      "query": "what are the critical rules for working with Tony given his ADHD and dyslexia",
+      "hint": "P1 rules, should cite multiple rule memories",
       "ok": true,
-      "response": "Found one highly relevant memory.\n\n**[technical] (bb8c8b65)** AI Agent Operational Safety Doctrine — 5 Core Skills + Implementation Checklist\n\nThis memory contains a comprehensive session start and operational framework for AI agents. The 5 core skills are:\n\n1. **Version Control (Git)** — Commit before asking agent for next change, never go >30 minutes without committing, commit BEFORE any destructive task\n\n2. **Context Window Management** — Start new conversations for distinct tasks, restart after ~30 messages with summary, use screenshots instead of text descriptions to preserve context\n\n3. **Rules File (CLAUDE.md)** — Agent persistent memory across sessions, grow it from actual problems not theory, keep institutional knowledge and prevent repeated mistakes\n\n4. **Blast Radius & Task Decomposition** — Map affected files/tables before tasks affecting 1,000+ items, break into small testable steps, commit between each step, stop if agent runs >5 minutes without showing progress\n\n5. **Security, Error Handling, Scale** — Audit RLS, never paste secrets in conversations, add try/catch + logging for API failures, build for scale from start\n\nThe key reframe: you're a project manager for an autonomous worker, not a developer. Focus on process discipline, judgment, supervision, and knowing when to stop and check.",
+      "response": "Critical rules for working with Tony given ADHD and dyslexia:\n\n**Communication:**\n- [wfs] (087c9482) ONE question at a time. Stacked questions = only the last one gets answered.\n- [general] (00334d14) Never stack questions. Ask one, wait for the answer, then ask the next. Tony's brain defaults to answering only the last one.\n- [personal] (1542d674) ONE step at a time. ONE action. Stop. Wait. No walls of text. Under 60 words default. No multi-step numbered lists. Give step 1 only. When done, step 2.\n- [personal] (6dc27ac2) Give ENTIRE UPDATED DOCUMENTS, not fragments. No \"insert this in section X\" instructions. He needs Select All -> Paste -> Done.\n\n**Task Completion:**\n- [wfs] (087c9482) FINISH tasks completely. Don't ask permission to keep going or offer to \"move on.\" Just finish.\n- [general] (00334d14) Don't stop halfway through tasks. Tony's exact words: \"lets finished you always want to give up halfway through a task.\"\n\n**Don't Ask About Invisible Things:**\n- [wfs] (087c9482) Don't ask about internal bookkeeping (session checkpoints, memory IDs). Tony never sees these.\n- [general] (00334d14) Don't ask \"should I keep checkpoint #44?\" He has no idea what's in them. Just handle it.\n\n**Writing Style:**\n- [wfs] (087c9482) No em dashes (--). Use commas, periods, or shorter sentences. Keep explanations simple. Tony is a filmmaker, not a developer.\n\n**Database First:**\n- [technical] (43e45f59) Always check Supabase database BEFORE asking Tony for contact info. Most people are already in the system.",
       "memory_ids": [
-        "bb8c8b65"
+        "087c9482",
+        "00334d14",
+        "1542d674",
+        "6dc27ac2",
+        "43e45f59"
       ],
       "iterations": 3,
-      "server_duration_ms": 45671,
-      "total_duration_ms": 46042,
-      "session_id": "sesn_011CaFCDeCa8StYMu6YPgWp4",
+      "server_duration_ms": 42572,
+      "total_duration_ms": 42933,
+      "session_id": "sesn_011CaFE1baU12qHqaaiuH9ox",
       "error": null
     },
     {
-      "query": "how does Mem0 enhance pgvector for memory recall",
-      "hint": "architecture check",
+      "query": "what is the troubleshooting playbook when something breaks",
+      "hint": "P1 rules, should cite the troubleshooting playbook memory",
       "ok": true,
-      "response": "No memory found matching Mem0 + pgvector integration.\n\nBank holds one technical entry about pgvector embedding upgrades (4c437445), but nothing about Mem0 as a layer or enhancement on top of pgvector.\n\nIf Mem0 is a planned or newly integrated component, no record exists yet.",
+      "response": "Found it: troubleshooting playbook from memory-file.\n\n**When something breaks, follow this protocol (b4057b03):**\n\n1. **STOP. Don't touch code.** No deploys, no SQL, no debugging. Just stop.\n\n2. **TALK. Diagnose with Tony.** What's actually broken (not the error message, what the USER sees)? What still works? What was the GOAL?\n\n3. **LOOK AT DATA before proposing fixes.** Pull actual records from the DB. Compare outputs. Check what survived vs what was lost.\n\n4. **QUESTION THE PREMISE.** \"Do we even need this step?\" \"Is there a simpler path?\" \"Can we skip the hard part?\"\n\n5. **ONE thing at a time.** Do one thing. Talk about what we learned. Decide the next thing together. Don't stack 5 actions.\n\n**The anti-pattern (wastes days):** See error > try to fix > creates new error > fix that > repeat\n\n**The pattern that works:** Talk > look at data > question premise > find real problem > simple solution appears",
       "memory_ids": [
-        "4c437445"
+        "b4057b03"
       ],
-      "iterations": 2,
-      "server_duration_ms": 18763,
-      "total_duration_ms": 19276,
-      "session_id": "sesn_011CaFCH3k1PoYE1VDJX5aor",
+      "iterations": 1,
+      "server_duration_ms": 18510,
+      "total_duration_ms": 18756,
+      "session_id": "sesn_011CaFE4kgUthEB7znqcRGSB",
       "error": null
     },
     {
-      "query": "what are the priority load levels P1 P2 P3 P4 for memory files",
-      "hint": "process check",
-      "ok": false,
-      "response": null,
+      "query": "what are the project guardrails around publicly using ICE and Tony being EP not a rep",
+      "hint": "P1 guardrails, should cite the project guardrails memory",
+      "ok": true,
+      "response": "No matches found. The project guardrails memory about ICE public usage and Tony's EP/rep distinction does not exist in the bank.",
       "memory_ids": [],
-      "iterations": null,
-      "server_duration_ms": null,
-      "total_duration_ms": 20167,
-      "session_id": null,
-      "error": "Batch tool results failed (400): {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid user.custom_tool_result event at events[0]: waiting on responses to events [sevt_01TSnFztajLhKfh2Wr1WaRMn]; only `user.tool_confirmation`, `user.custom_tool_result`, or `user.interrupt` may be sent\"},\"request_id\":\"req_011CaFCKskKZKh9We5WcEWr2\"}"
+      "iterations": 4,
+      "server_duration_ms": 30232,
+      "total_duration_ms": 30543,
+      "session_id": "sesn_011CaFE68yxLyB5K9KZTqPmo",
+      "error": null
     },
     {
-      "query": "what is the refresh pattern and why is it needed in long AI sessions",
-      "hint": "process check",
+      "query": "what are the technical gotchas around reanalysis version and HLS that keep getting repeated",
+      "hint": "should cite the gotchas memory",
       "ok": true,
-      "response": "No memories found for refresh pattern or long AI session management.\n\nThis topic isn't documented in the memory bank yet. If this is a process you use or want to establish, I can store it once you explain what it is.",
-      "memory_ids": [],
+      "response": "Found it. Here are the two HLS and reanalysis_version gotchas that keep getting repeated (from memory d4673646):\n\n**Gotcha #1: Reanalysis Progress = `reanalysis_version`, NOT `analysis_version`**\n- `analysis_version` = original upload analysis (most already v3)\n- `reanalysis_version` = batch reanalyze cron progress\n- Correct: `SELECT reanalysis_version, COUNT(*) FROM spots GROUP BY 1;`\n\n**Gotcha #2: Video Download = HLS Segments, NOT low.mp4**\n- analyze-spot downloads via HLS (parses .m3u8, downloads fMP4 segments, concatenates)\n- Do not suggest using low.mp4\n\nThis is from the P1 gotchas memory (d4673646) that documents repeated technical mistakes.",
+      "memory_ids": [
+        "d4673646"
+      ],
+      "iterations": 1,
+      "server_duration_ms": 21505,
+      "total_duration_ms": 21791,
+      "session_id": "sesn_011CaFE8QC49kTZvJzuiwjN7",
+      "error": null
+    },
+    {
+      "query": "how does the Memory Steward Managed Agent work and what agent id does it use",
+      "hint": "recent architecture memory from April 2026",
+      "ok": true,
+      "response": "Found two architectural memories from Apr 20 2026 about the Memory Steward Managed Agent.\n\n**Agent ID: `agent_011CaEV1j798Ndaz1W2mXSer`**\n\n**How it works:**\n\nArchitecture is a three-phase build:\n- **Phase B (complete)**: Agent created at Anthropic with 5 custom tools (recall_smart, recent, remember, forget, stats), running claude-sonnet-4-5, using system prompt for smart recall + ruthless filtering + dedup-checking before saves.\n- **Phase C (pending)**: Orchestrator service that listens to agent.custom_tool_use SSE events from the managed agent and executes those tool calls against Supabase memory-api, then posts user.custom_tool_result back. Replaces current Railway personal-memory-mcp-http server.\n- **Phase D (pending)**: Claude Code MCP bridge that exposes one tool `memory_query(query)` to clients and internally spins a Memory Steward session.\n\n**Session mechanics (reference pattern from EP Brain managed agent):**\n- Create via `POST /v1/sessions?beta=true` with agent ID + environment_id + title\n- Stream via `GET /sessions/{id}/events/stream?beta=true`\n- Tool results back via `POST /sessions/{id}/events?beta=true` with type=user.custom_tool_result\n\n**Environment ID:** `env_018yPJrbrPW2h8KJynKEuTye` (same one EP Brain uses)\n\n**Auth:** ANTHROPIC_API_KEY_TRIGGER_DEV (from ~/.wfs-keys)\n\n**API headers:** x-api-key, anthropic-version: 2023-06-01, anthropic-beta: managed-agents-2026-04-01\n\n**Reference implementation:** `/Users/tonyfinley/Documents/WFS-Anthropic-Master/Adopt A Director/trigger-workers/src/trigger/ep-brain-managed-agent.ts`\n\n[technical] (2c278371) Memory Steward agent created Apr 20 2026. ID agent_011CaEV1j798Ndaz1W2mXSer. Phase B complete, Phases C and D pending.\n[technical] (c74923d2) Design spec for Memory Steward managed agent: 5 custom tools, orchestrator pattern, MCP bridge consumer.",
+      "memory_ids": [
+        "2c278371",
+        "c74923d2"
+      ],
       "iterations": 3,
-      "server_duration_ms": 24216,
-      "total_duration_ms": 24636,
-      "session_id": "sesn_011CaFCKwp9tSnfZRmLNuaH6",
-      "error": null
-    },
-    {
-      "query": "what is the open brain dashboard and what does it do",
-      "hint": "product self-check",
-      "ok": true,
-      "response": "Found two relevant memories about Open Brain.\n\n**Open Brain Dashboard is a web UI for managing Tony's memory bank stored in Supabase.**\n\n- [technical] (6709164a) Hosted at brain.wfs.productions (also open-brain-one.vercel.app). Full CRUD interface for memory files: view, edit, create, delete. Browse by category, search semantically. Connects to Supabase via memory-api edge function. Supabase memories table is source of truth; local .md files are offline backups only.\n\n- [technical] (586c0ccb) Uses Google OAuth (Supabase Auth) for login. Allowed emails: tony@wefilmshit.com, ai@wefilmshit.com, tonyfinley7@gmail.com. Domain CNAME set on GoDaddy. Also has a Brain Map visual tree tab.",
-      "memory_ids": [
-        "6709164a",
-        "586c0ccb"
-      ],
-      "iterations": 2,
-      "server_duration_ms": 25649,
-      "total_duration_ms": 26071,
-      "session_id": "sesn_011CaFCMmmTJjvieeLkaFiXe",
+      "server_duration_ms": 42510,
+      "total_duration_ms": 42745,
+      "session_id": "sesn_011CaFE9z4HcjQUrp6rpqgc5",
       "error": null
     }
   ]
