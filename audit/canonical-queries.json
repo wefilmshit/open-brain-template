@@ -1,0 +1,26 @@
+[
+  {
+    "query": "how does Memory Steward work and what problem does it solve",
+    "hint": "architecture self-check"
+  },
+  {
+    "query": "what is the session start checklist an AI agent should follow",
+    "hint": "process check"
+  },
+  {
+    "query": "how does Mem0 enhance pgvector for memory recall",
+    "hint": "architecture check"
+  },
+  {
+    "query": "what are the priority load levels P1 P2 P3 P4 for memory files",
+    "hint": "process check"
+  },
+  {
+    "query": "what is the refresh pattern and why is it needed in long AI sessions",
+    "hint": "process check"
+  },
+  {
+    "query": "what is the open brain dashboard and what does it do",
+    "hint": "product self-check"
+  }
+]
