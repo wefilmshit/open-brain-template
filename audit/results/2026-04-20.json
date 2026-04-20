@@ -1,6 +1,6 @@
 {
   "run_date": "2026-04-20",
-  "timestamp": "2026-04-20T15:01:35.771Z",
+  "timestamp": "2026-04-20T15:11:36.773Z",
   "mcp_url": "https://personal-memory-mcp-http-production.up.railway.app",
   "query_count": 6,
   "ok_count": 6,
@@ -9,85 +9,90 @@
       "query": "what command does Tony use to deploy Supabase edge functions",
       "hint": "concrete operational recall, should cite specific deploy command memory",
       "ok": true,
-      "response": "**Tony uses:**\n\n```\nsupabase functions deploy --project-ref inqwtstopucpxfnuisus\n```\n\nwith token passed inline:\n```\nSUPABASE_ACCESS_TOKEN=$(cat ~/.supabase_access_token) supabase functions deploy <function-name> --project-ref inqwtstopucpxfnuisus\n```\n\n**Public-facing functions** (track-visitor, track-reel-view, verify-reel-password, activate-director, mux-webhook) require `--no-verify-jwt` flag or they'll reject requests with 401.\n\nFunction files written to `/tmp/supabase-deploy/supabase/functions/<name>/index.ts`, never local project folders (those are reference only).\n\nToken name: \"Claude Code 4\", stored at `~/.supabase_access_token`.\n\n(41019b03, 481bfedc, 6d93b6a3)",
-      "memory_ids": [],
+      "response": "Tony uses `supabase functions deploy` with `--project-ref inqwtstopucpxfnuisus` flag, passing the token inline:\n\n```bash\nSUPABASE_ACCESS_TOKEN=$(cat ~/.supabase_access_token) supabase functions deploy\n```\n\nAdditional deploy notes from the memory:\n- Token stored at `~/.supabase_access_token` (token name: \"Claude Code 4\", never expires)\n- Write function files to `/tmp/supabase-deploy/supabase/functions/<name>/index.ts` (not in project folder)\n- No linking required, always use `--project-ref` flag\n- Public-facing functions need `--no-verify-jwt` flag (track-visitor, track-reel-view, verify-reel-password, activate-director, mux-webhook)\n\n(41019b03)",
+      "memory_ids": [
+        "41019b03"
+      ],
       "iterations": 1,
-      "server_duration_ms": 26275,
-      "total_duration_ms": 26589,
-      "session_id": "sesn_011CaFDydiPV1XBvNarpBRHU",
+      "server_duration_ms": 24386,
+      "total_duration_ms": 24810,
+      "session_id": "sesn_011CaFEjw9cW5UavRoeUHD79",
       "error": null
     },
     {
       "query": "what are the critical rules for working with Tony given his ADHD and dyslexia",
       "hint": "P1 rules, should cite multiple rule memories",
       "ok": true,
-      "response": "Critical rules for working with Tony given ADHD and dyslexia:\n\n**Communication:**\n- [wfs] (087c9482) ONE question at a time. Stacked questions = only the last one gets answered.\n- [general] (00334d14) Never stack questions. Ask one, wait for the answer, then ask the next. Tony's brain defaults to answering only the last one.\n- [personal] (1542d674) ONE step at a time. ONE action. Stop. Wait. No walls of text. Under 60 words default. No multi-step numbered lists. Give step 1 only. When done, step 2.\n- [personal] (6dc27ac2) Give ENTIRE UPDATED DOCUMENTS, not fragments. No \"insert this in section X\" instructions. He needs Select All -> Paste -> Done.\n\n**Task Completion:**\n- [wfs] (087c9482) FINISH tasks completely. Don't ask permission to keep going or offer to \"move on.\" Just finish.\n- [general] (00334d14) Don't stop halfway through tasks. Tony's exact words: \"lets finished you always want to give up halfway through a task.\"\n\n**Don't Ask About Invisible Things:**\n- [wfs] (087c9482) Don't ask about internal bookkeeping (session checkpoints, memory IDs). Tony never sees these.\n- [general] (00334d14) Don't ask \"should I keep checkpoint #44?\" He has no idea what's in them. Just handle it.\n\n**Writing Style:**\n- [wfs] (087c9482) No em dashes (--). Use commas, periods, or shorter sentences. Keep explanations simple. Tony is a filmmaker, not a developer.\n\n**Database First:**\n- [technical] (43e45f59) Always check Supabase database BEFORE asking Tony for contact info. Most people are already in the system.",
+      "response": "**Critical rules for working with Tony (ADHD + dyslexia):**\n\n- **ONE question at a time.** (087c9482, 6dc27ac2, 00334d14) Stacked questions default to only the last one being answered. Ask one, wait, then ask the next.\n\n- **FINISH tasks completely.** (087c9482, 00334d14) Do not stop halfway. Do not ask permission to keep going or offer to move on. Just finish.\n\n- **ONE step at a time. NO walls of text.** (1542d674) Responses under 60 words. No multi-step numbered lists. Give step 1, wait for completion, then step 2. No tables/comparison matrices unless asked. If writing >8 lines, cut it.\n\n- **Full documents, not fragments.** (6dc27ac2) Give ENTIRE UPDATED DOCUMENT so Tony can Select All → Paste → Done. Never \"insert this in section X\" instructions.\n\n- **No em dashes (--).** (087c9482) Dead giveaway for AI text. Use commas, periods, or shorter sentences.\n\n- **Keep explanations simple.** (087c9482) Tony is a filmmaker, not a developer. Lead with what matters to him.\n\n- **STOP AND TALK before coding.** (087c9482) Diagnose WITH Tony. Question the premise. No brute-force fixes.\n\n- **Don't ask about internal bookkeeping.** (087c9482, 00334d14) Session checkpoints, memory IDs, etc. Tony never sees these.\n\n- **Read intent over spelling.** (7ad03743) Do not nitpick typos.\n\n- **Destructive actions: confirm first.** (70499f9e) Always check before deletes, bulk updates, clearing logs, dropping tables. Even when Tony asks directly, confirm scope.\n\n- **Unambiguous wins: just do it.** (f8ce08e1) For clearly beneficial, low-risk, non-destructive improvements, proceed without asking.",
       "memory_ids": [
-        "087c9482",
-        "00334d14",
         "1542d674",
         "6dc27ac2",
-        "43e45f59"
+        "087c9482",
+        "7ad03743",
+        "70499f9e",
+        "f8ce08e1"
       ],
       "iterations": 3,
-      "server_duration_ms": 42572,
-      "total_duration_ms": 42933,
-      "session_id": "sesn_011CaFE1baU12qHqaaiuH9ox",
+      "server_duration_ms": 42838,
+      "total_duration_ms": 43071,
+      "session_id": "sesn_011CaFEmkTEdQJuy989pM1QD",
       "error": null
     },
     {
       "query": "what is the troubleshooting playbook when something breaks",
       "hint": "P1 rules, should cite the troubleshooting playbook memory",
       "ok": true,
-      "response": "Found it: troubleshooting playbook from memory-file.\n\n**When something breaks, follow this protocol (b4057b03):**\n\n1. **STOP. Don't touch code.** No deploys, no SQL, no debugging. Just stop.\n\n2. **TALK. Diagnose with Tony.** What's actually broken (not the error message, what the USER sees)? What still works? What was the GOAL?\n\n3. **LOOK AT DATA before proposing fixes.** Pull actual records from the DB. Compare outputs. Check what survived vs what was lost.\n\n4. **QUESTION THE PREMISE.** \"Do we even need this step?\" \"Is there a simpler path?\" \"Can we skip the hard part?\"\n\n5. **ONE thing at a time.** Do one thing. Talk about what we learned. Decide the next thing together. Don't stack 5 actions.\n\n**The anti-pattern (wastes days):** See error > try to fix > creates new error > fix that > repeat\n\n**The pattern that works:** Talk > look at data > question premise > find real problem > simple solution appears",
+      "response": "Found the P1 troubleshooting playbook.\n\n[memory-file] (b4057b03) **Troubleshooting Playbook** -- Step-by-step protocol when things break:\n\n1. **STOP.** Don't touch code. No deploys, no SQL, no debugging. Just stop.\n\n2. **TALK.** Diagnose with Tony. What's actually broken (not the error message, what the USER sees)? What still works? What was the GOAL?\n\n3. **LOOK AT DATA** before proposing fixes. Pull actual records from the DB. Compare outputs. Check what survived vs what was lost.\n\n4. **QUESTION THE PREMISE.** \"Do we even need this step?\" \"Is there a simpler path?\" \"Can we skip the hard part?\"\n\n5. **ONE thing at a time.** Do one thing. Talk about what we learned. Decide the next thing together. Don't stack 5 actions.\n\n**The anti-pattern (wastes days):**  \nSee error > try to fix > creates new error > fix that > repeat\n\n**The pattern that works:**  \nTalk > look at data > question premise > find real problem > simple solution appears",
       "memory_ids": [
         "b4057b03"
       ],
-      "iterations": 1,
-      "server_duration_ms": 18510,
-      "total_duration_ms": 18756,
-      "session_id": "sesn_011CaFE4kgUthEB7znqcRGSB",
+      "iterations": 2,
+      "server_duration_ms": 32903,
+      "total_duration_ms": 33036,
+      "session_id": "sesn_011CaFEpvampSEKV7jBudRSD",
       "error": null
     },
     {
       "query": "what are the project guardrails around publicly using ICE and Tony being EP not a rep",
       "hint": "P1 guardrails, should cite the project guardrails memory",
       "ok": true,
-      "response": "No matches found. The project guardrails memory about ICE public usage and Tony's EP/rep distinction does not exist in the bank.",
-      "memory_ids": [],
-      "iterations": 4,
-      "server_duration_ms": 30232,
-      "total_duration_ms": 30543,
-      "session_id": "sesn_011CaFE68yxLyB5K9KZTqPmo",
+      "response": "Found one memory with the ICE public-use guardrail (cf3b8600). Let me search more specifically for Tony's EP role guardrails:Perfect match found. Here are the two project guardrails you asked about:\n\n**[memory-file] (388e1e83) Rules -- Project Guardrails (P1)**\n\n1. **NEVER use \"ICE\" publicly.** Political connotations. Always spell out \"Intelligent Creative Engine.\"\n\n2. **Tony is EP/Producer, NOT a rep.** He produces spots and manages directors. Never call him a rep or agent.\n\nAdditional context from this memory includes:\n- AI email ai@wefilmshit.com ONLY for independent Claude action\n- Claude workflow: Agents suggest > Claude evaluates > Claude emails Tony recommendation > Tony approves > Claude executes\n- iMessage rule: Never text as Tony, always identify as \"Claude, Tony's AI assistant\"\n- Local codebase is READ-ONLY reference\n- Frontend moved from Bolt to Vercel March 25 2026\n\nThis memory is tagged priority-1 and marked READ EVERY SESSION.",
+      "memory_ids": [
+        "cf3b8600",
+        "388e1e83"
+      ],
+      "iterations": 3,
+      "server_duration_ms": 37443,
+      "total_duration_ms": 37667,
+      "session_id": "sesn_011CaFEsPFwtk8hs8zeb7NkF",
       "error": null
     },
     {
       "query": "what are the technical gotchas around reanalysis version and HLS that keep getting repeated",
       "hint": "should cite the gotchas memory",
       "ok": true,
-      "response": "Found it. Here are the two HLS and reanalysis_version gotchas that keep getting repeated (from memory d4673646):\n\n**Gotcha #1: Reanalysis Progress = `reanalysis_version`, NOT `analysis_version`**\n- `analysis_version` = original upload analysis (most already v3)\n- `reanalysis_version` = batch reanalyze cron progress\n- Correct: `SELECT reanalysis_version, COUNT(*) FROM spots GROUP BY 1;`\n\n**Gotcha #2: Video Download = HLS Segments, NOT low.mp4**\n- analyze-spot downloads via HLS (parses .m3u8, downloads fMP4 segments, concatenates)\n- Do not suggest using low.mp4\n\nThis is from the P1 gotchas memory (d4673646) that documents repeated technical mistakes.",
+      "response": "Found three key gotchas:\n\n**[technical] (10c4a010)** Videos with audio/video stream duration differences greater than 0.5 seconds will fail reindexing, requiring re-encoding.\n\n**[memory-file] (5665f8a5)** Track reanalysis progress using reanalysis_version, not analysis_version. Correct query: `SELECT reanalysis_version, COUNT(*) FROM spots GROUP BY 1;`\n\n**[technical] (10f5abfe)** Analyze-spot downloads video via HLS segment download (parsing .m3u8, downloading fMP4 init and media segments, concatenating them). The low.mp4 approach failed.",
       "memory_ids": [
-        "d4673646"
+        "10c4a010",
+        "5665f8a5",
+        "10f5abfe"
       ],
-      "iterations": 1,
-      "server_duration_ms": 21505,
-      "total_duration_ms": 21791,
-      "session_id": "sesn_011CaFE8QC49kTZvJzuiwjN7",
+      "iterations": 2,
+      "server_duration_ms": 24197,
+      "total_duration_ms": 24503,
+      "session_id": "sesn_011CaFEv8k9EkhY7nfAhPoyL",
       "error": null
     },
     {
       "query": "how does the Memory Steward Managed Agent work and what agent id does it use",
       "hint": "recent architecture memory from April 2026",
       "ok": true,
-      "response": "Found two architectural memories from Apr 20 2026 about the Memory Steward Managed Agent.\n\n**Agent ID: `agent_011CaEV1j798Ndaz1W2mXSer`**\n\n**How it works:**\n\nArchitecture is a three-phase build:\n- **Phase B (complete)**: Agent created at Anthropic with 5 custom tools (recall_smart, recent, remember, forget, stats), running claude-sonnet-4-5, using system prompt for smart recall + ruthless filtering + dedup-checking before saves.\n- **Phase C (pending)**: Orchestrator service that listens to agent.custom_tool_use SSE events from the managed agent and executes those tool calls against Supabase memory-api, then posts user.custom_tool_result back. Replaces current Railway personal-memory-mcp-http server.\n- **Phase D (pending)**: Claude Code MCP bridge that exposes one tool `memory_query(query)` to clients and internally spins a Memory Steward session.\n\n**Session mechanics (reference pattern from EP Brain managed agent):**\n- Create via `POST /v1/sessions?beta=true` with agent ID + environment_id + title\n- Stream via `GET /sessions/{id}/events/stream?beta=true`\n- Tool results back via `POST /sessions/{id}/events?beta=true` with type=user.custom_tool_result\n\n**Environment ID:** `env_018yPJrbrPW2h8KJynKEuTye` (same one EP Brain uses)\n\n**Auth:** ANTHROPIC_API_KEY_TRIGGER_DEV (from ~/.wfs-keys)\n\n**API headers:** x-api-key, anthropic-version: 2023-06-01, anthropic-beta: managed-agents-2026-04-01\n\n**Reference implementation:** `/Users/tonyfinley/Documents/WFS-Anthropic-Master/Adopt A Director/trigger-workers/src/trigger/ep-brain-managed-agent.ts`\n\n[technical] (2c278371) Memory Steward agent created Apr 20 2026. ID agent_011CaEV1j798Ndaz1W2mXSer. Phase B complete, Phases C and D pending.\n[technical] (c74923d2) Design spec for Memory Steward managed agent: 5 custom tools, orchestrator pattern, MCP bridge consumer.",
-      "memory_ids": [
-        "2c278371",
-        "c74923d2"
-      ],
-      "iterations": 3,
-      "server_duration_ms": 42510,
-      "total_duration_ms": 42745,
-      "session_id": "sesn_011CaFE9z4HcjQUrp6rpqgc5",
+      "response": "Two versions exist, v2 is current:\n\n**CURRENT: agent_011CaFDqHFrhkvwMguYfMujf (v2)**\n- Model: claude-sonnet-4-5\n- Beta: managed-agents-2026-04-01\n- Live on: Railway service personal-memory-mcp-http via env MEMORY_STEWARD_AGENT_ID\n- Environment: env_018yPJrbrPW2h8KJynKEuTye (shared with EP Brain, Creative Directions)\n\n**How it works:**\n1. Claude Code or another caller creates a session via POST /v1/sessions?beta=true with this agent_id and the shared environment_id\n2. Caller sends a query like \"recall memories about X\"\n3. Memory Steward receives request, uses its 5 custom tools (recall_smart, recent, remember, forget, stats) to query Supabase\n4. Orchestrator service (Phase C, lives in Railway) listens to agent.custom_tool_use SSE events, executes actual database calls, posts user.custom_tool_result back\n5. Memory Steward filters + re-ranks raw results, returns tight answer\n6. Results stream back to caller via SSE\n\n**v2 improvements over v1 (agent_011CaEV1j798Ndaz1W2mXSer):**\n- Added memory-file category to tool enums and system prompt (v1 literally could not see P1 rule memories)\n- New search strategy: defaults to unfiltered recall_smart, tries 2-3 parallel phrasings before concluding \"not found\"\n- Fixed 5 of 6 canonical decay-audit query failures\n\n(2c278371, b7696859)",
+      "memory_ids": [],
+      "iterations": 2,
+      "server_duration_ms": 34474,
+      "total_duration_ms": 34764,
+      "session_id": "sesn_011CaFExDBcND4b8Qeh7WpCs",
       "error": null
     }
   ]
