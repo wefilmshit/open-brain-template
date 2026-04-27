@@ -1,0 +1,99 @@
+{
+  "run_date": "2026-04-27",
+  "timestamp": "2026-04-27T14:55:11.348Z",
+  "mcp_url": "https://personal-memory-mcp-http-production.up.railway.app",
+  "query_count": 6,
+  "ok_count": 6,
+  "results": [
+    {
+      "query": "what command does Tony use to deploy Supabase edge functions",
+      "hint": "concrete operational recall, should cite specific deploy command memory",
+      "ok": true,
+      "response": "**[technical] (41019b03) Supabase edge function deploy command:**\n\n```\nsupabase functions deploy <function-name> --project-ref inqwtstopucpxfnuisus\n```\n\nToken passed inline:\n```\nSUPABASE_ACCESS_TOKEN=$(cat ~/.supabase_access_token) supabase functions deploy <function-name> --project-ref inqwtstopucpxfnuisus\n```\n\n**Critical flags:**\n- Public/webhook functions require `--no-verify-jwt` (6d93b6a3, 481bfedc)\n- Function files written to `/tmp/supabase-deploy/supabase/functions/<name>/index.ts`\n- Token stored at `~/.supabase_access_token` (never expires, named \"Claude Code 4\")\n- Project ref: `inqwtstopucpxfnuisus`",
+      "memory_ids": [
+        "41019b03"
+      ],
+      "iterations": 1,
+      "server_duration_ms": 27392,
+      "total_duration_ms": 27909,
+      "session_id": "sesn_011CaUU9hwr1QJo6H2ajQWxj",
+      "error": null
+    },
+    {
+      "query": "what are the critical rules for working with Tony given his ADHD and dyslexia",
+      "hint": "P1 rules, should cite multiple rule memories",
+      "ok": true,
+      "response": "**Critical rules for working with Tony (ADHD + dyslexia):**\n\n- **ONE question at a time.** Stacked questions = only the last one gets answered. (087c9482)\n- **FINISH tasks completely.** Don't ask permission to keep going or offer to \"move on.\" Just finish. (087c9482)\n- **ONE step at a time.** One action. Stop. Wait. Default response length: under 60 words. No multi-step numbered lists. Give step 1 only. When done, step 2. (1542d674)\n- **NO walls of text.** Tony cannot process them. If >8 lines, cut it. No tables/matrices unless asked. No \"here are 3 options\" dumps. Pick one, ask if he wants it. (1542d674)\n- **NO code walls either.** Don't show implementation code for review. He can't parse it. Show screenshots, short summaries (\"3 files changed\"), and ship. (c3a848cc)\n- **NO em dashes (—).** Use commas, periods, or shorter sentences. (087c9482)\n- **STOP AND TALK before coding.** Diagnose WITH Tony. Question the premise. Don't brute-force fixes. (087c9482)\n- **Don't ask about internal bookkeeping.** Session checkpoints, memory IDs, etc. Tony never sees these. (087c9482, 00334d14)\n- **Full documents, not fragments.** Never ask him to hunt for where to paste changes. Give ENTIRE UPDATED DOCUMENT so he can Select All, Paste, Done. (6dc27ac2)\n- **Keep explanations simple.** Tony is a filmmaker, not a developer. Lead with what matters to him. (087c9482)\n- **Read intent over spelling.** Don't nitpick typos. (7ad03743)",
+      "memory_ids": [
+        "087c9482",
+        "1542d674",
+        "c3a848cc",
+        "6dc27ac2",
+        "7ad03743"
+      ],
+      "iterations": 3,
+      "server_duration_ms": 43042,
+      "total_duration_ms": 43284,
+      "session_id": "sesn_011CaUUBkGZUL67r7DUi5JSo",
+      "error": null
+    },
+    {
+      "query": "what is the troubleshooting playbook when something breaks",
+      "hint": "P1 rules, should cite the troubleshooting playbook memory",
+      "ok": true,
+      "response": "**Troubleshooting playbook found.**\n\n[memory-file] (b4057b03) P1 Troubleshooting Playbook\n\n**When something breaks:**\n\n1. **STOP.** Don't touch code. No deploys, no SQL, no debugging. Just stop.\n\n2. **TALK.** Diagnose with Tony. What's actually broken (not the error message, what the USER sees)? What still works? What was the GOAL?\n\n3. **LOOK AT DATA** before proposing fixes. Pull actual records from the DB. Compare outputs. Check what survived vs what was lost.\n\n4. **QUESTION THE PREMISE.** \"Do we even need this step?\" \"Is there a simpler path?\" \"Can we skip the hard part?\"\n\n5. **ONE thing at a time.** Do one thing. Talk about what we learned. Decide the next thing together. Don't stack 5 actions.\n\n**Anti-pattern (wastes days):** See error > try to fix > creates new error > fix that > repeat\n\n**Pattern that works:** Talk > look at data > question premise > find real problem > simple solution appears",
+      "memory_ids": [
+        "b4057b03"
+      ],
+      "iterations": 1,
+      "server_duration_ms": 32639,
+      "total_duration_ms": 32866,
+      "session_id": "sesn_011CaUUEwqeu96srNoR62MWK",
+      "error": null
+    },
+    {
+      "query": "what are the project guardrails around publicly using ICE and Tony being EP not a rep",
+      "hint": "P1 guardrails, should cite the project guardrails memory",
+      "ok": true,
+      "response": "Found two relevant guardrails:\n\n**[memory-file] (faf5f080)** Never publicly refer to \"Intelligent Creative Engine\" as \"ICE\" to avoid brand confusion or IP issues.\n\n**[memory-file] (f4769de4)** Tony (Anthony Finley) is an EP/Line Producer and owner of WFS, loves being on set, is not a rep/agent, manages spots and directors, and is building the sales/outreach side.",
+      "memory_ids": [
+        "faf5f080",
+        "f4769de4"
+      ],
+      "iterations": 2,
+      "server_duration_ms": 31807,
+      "total_duration_ms": 32029,
+      "session_id": "sesn_011CaUUHMV2DmU9F8yrohb5n",
+      "error": null
+    },
+    {
+      "query": "what are the technical gotchas around reanalysis version and HLS that keep getting repeated",
+      "hint": "should cite the gotchas memory",
+      "ok": true,
+      "response": "**Two recurring gotchas:**\n\n- **[memory-file] (5665f8a5)** Track reanalysis progress using `reanalysis_version`, NOT `analysis_version`. Correct query: `SELECT reanalysis_version, COUNT(*) FROM spots GROUP BY 1;`\n\n- **[memory-file] (8c8e1c90)** The batch-reanalyze process uses HLS segment downloads for all spots. The process does NOT clear old analysis before re-analyzing.\n\nAdditional context from recent runs:\n\n- **[project] (2d983e3c)** Before re-running, verify Gemini File API quota (20GB limit, may need manual increase to 100GB). Plan B is rebuilding analyze-spot to use HLS video segments.\n\n- **[technical] (10f5abfe)** Analyze-spot downloads via HLS segment download (parsing .m3u8, downloading fMP4 init and media segments, concatenating). The low.mp4 approach failed.",
+      "memory_ids": [
+        "5665f8a5",
+        "8c8e1c90",
+        "2d983e3c",
+        "10f5abfe"
+      ],
+      "iterations": 2,
+      "server_duration_ms": 37805,
+      "total_duration_ms": 38030,
+      "session_id": "sesn_011CaUUKiZad2s59oBtRymfy",
+      "error": null
+    },
+    {
+      "query": "how does the Memory Steward Managed Agent work and what agent id does it use",
+      "hint": "recent architecture memory from April 2026",
+      "ok": true,
+      "response": "**Current agent ID in production:** `agent_011CaFDqHFrhkvwMguYfMujf`\n\nMemory Steward v2 (created Apr 20 2026) is the live version.\n\n**How it works:**\n\nAnthropic Managed Agent that wraps Tony's open-brain memory bank (Supabase + Mem0). When called by another Claude session, it:\n\n1. **Smart recall** — takes the surface query + hint about the caller's actual task, reformulates for better embedding matches, casts multiple parallel queries when one phrasing isn't enough, re-ranks raw results by relevance to the task (not raw semantic similarity).\n\n2. **Ruthless filter** — drops stale, duplicate, contradicted, or off-topic matches. Returns three tight matches instead of ten noisy ones.\n\n3. **Dedup-check before saving** — always runs recall_smart with the new memory's summary before calling remember. Only saves if the new one adds material info.\n\n4. **Honest stewardship** — if nothing relevant exists, says so plainly. Never fabricates.\n\n**Architecture:**\n\n- Model: claude-sonnet-4-5\n- Beta: managed-agents-2026-04-01\n- Live on: Railway service personal-memory-mcp-http via env MEMORY_STEWARD_AGENT_ID\n- Environment: env_018yPJrbrPW2h8KJynKEuTye (shared with EP Brain, Creative Directions)\n- 5 custom tools: recall_smart, recent, remember, forget, stats\n\n**Why v2 replaced v1:**\n\nv1 (agent_011CaEV1j798Ndaz1W2mXSer) missed 5 of 6 canonical decay-audit queries because it didn't know about the memory-file category. P1 rule memories (troubleshooting playbook, project guardrails, gotchas, ADHD rules) all live there. v2 added memory-file to tool enums + system prompt, plus unfiltered-first search strategy (default to no category filter, only narrow when highly confident, try 2-3 parallel phrasings before concluding \"not found\").\n\n(2c278371, b7696859)",
+      "memory_ids": [],
+      "iterations": 3,
+      "server_duration_ms": 52394,
+      "total_duration_ms": 52670,
+      "session_id": "sesn_011CaUUNXGH6TcPwUB6wKdpv",
+      "error": null
+    }
+  ]
+}
