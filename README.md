@@ -20,6 +20,8 @@ And even when you have a memory bank wired up, raw semantic recall returns noise
 
 **Visual brain map.** See your entire memory hierarchy at a glance. Click any node to expand, edit, or delete. Know exactly what your AI knows.
 
+**Agent comms view.** Track prompt/response artifacts saved by multiple agents as lightweight pointer memories tagged `agent-artifact`, with from/to/topic/date/priority columns and click-throughs to the source file path.
+
 **Semantic search.** Find any memory by meaning, not keywords. Powered by pgvector embeddings.
 
 **Works across tools.** One memory bank, any AI tool. Claude Code at work, ChatGPT on your phone, Cursor in your IDE — they all read from the same brain.
@@ -200,6 +202,11 @@ The Memory Steward path is optional — the older direct `recall` / `remember` p
 - New SessionStart hook: auto-load N most recent memories at every session start
 - New optional orchestrator service: drives Memory Steward sessions, executes custom tool calls against the existing Supabase memory-api, returns synthesized answers
 - Full backward compatibility: legacy `remember` / `recall` / `recent_memories` / `forget` / `memory_stats` MCP tools unchanged
+
+### May 2026 — Agent Comms pointers
+- New Agent Comms dashboard tab for memories tagged `agent-artifact`
+- Thread-style grouping by topic with from/to, kind, priority, date, summary, and artifact path columns
+- Designed for artifact-pointer workflows where agents save durable prompt/response files and store only small Open Brain pointer memories
 
 ### See [docs/](docs/) for setup recipes:
 - [docs/memory-steward.md](docs/memory-steward.md) — create the Managed Agent + stand up the orchestrator

@@ -143,6 +143,41 @@
     padding: 2px 8px; border-radius: 3px;
   }
 
+  /* Agent Comms */
+  .comms-toolbar {
+    display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+  }
+  .comms-toolbar select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 10px; border-radius: 6px; font-family: inherit; font-size: 0.8rem;
+  }
+  .comms-count { font-size: 0.75rem; color: var(--text2); margin-left: auto; }
+  .comms-thread { margin-bottom: 18px; }
+  .comms-thread-title {
+    font-size: 0.8rem; color: var(--accent2); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .comms-table {
+    width: 100%; border-collapse: collapse; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  }
+  .comms-table th, .comms-table td {
+    text-align: left; border-bottom: 1px solid var(--border); padding: 10px 12px;
+    font-size: 0.75rem; vertical-align: top;
+  }
+  .comms-table th { color: var(--text2); background: var(--surface2); font-weight: 600; }
+  .comms-table tr:last-child td { border-bottom: none; }
+  .comms-pill {
+    display: inline-block; padding: 2px 7px; border-radius: 4px;
+    background: var(--surface2); color: var(--text2); font-size: 0.65rem;
+  }
+  .comms-pill.p2 { background: #fdcb6e22; color: var(--orange); }
+  .comms-pill.p3 { background: #74b9ff22; color: var(--blue); }
+  .comms-pill.p4 { background: #00b89422; color: var(--green); }
+  .comms-link { color: var(--accent2); text-decoration: none; word-break: break-word; }
+  .comms-link:hover { text-decoration: underline; }
+
   /* Action buttons */
   .card-actions {
     display: none; margin-top: 12px; padding-top: 10px;
@@ -445,10 +480,11 @@
       </div>
     </div>
 
-    <!-- Tab bar: 2 tabs -->
+    <!-- Tab bar -->
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('tree')">🧠 Brain Map</button>
       <button class="tab-btn" onclick="switchTab('editor')">✏️ Editor</button>
+      <button class="tab-btn" onclick="switchTab('comms')">📬 Agent Comms</button>
     </div>
 
     <!-- Tab 1: Brain Map (default) -->
@@ -523,6 +559,26 @@
         <div class="loading">Loading memory files...</div>
       </div>
     </div>
+
+    <!-- Tab 3: Agent Comms -->
+    <div class="tab-content" id="tab-comms">
+      <div class="comms-toolbar">
+        <span style="font-size:0.8rem;color:var(--text2);">Agent artifact pointers</span>
+        <select id="comms-agent-filter" onchange="renderAgentComms()">
+          <option value="">All agents</option>
+        </select>
+        <select id="comms-priority-filter" onchange="renderAgentComms()">
+          <option value="">All priorities</option>
+          <option value="P2">P2 action</option>
+          <option value="P3">P3 review</option>
+          <option value="P4">P4 reference</option>
+        </select>
+        <span class="comms-count" id="comms-count">--</span>
+      </div>
+      <div id="agent-comms-list">
+        <div class="loading">Loading agent comms...</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -541,6 +597,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 let accessToken = "";
 let allMemories = [];
 let allFiles = [];
+let allAgentComms = [];
 let activeTab = "tree";
 let treeLoaded = false;
 
@@ -633,6 +690,10 @@ function switchTab(tab) {
     tabs[1].classList.add("active");
     document.getElementById("tab-editor").classList.add("active");
     if (!allFiles.length) loadFiles();
+  } else if (tab === "comms") {
+    tabs[2].classList.add("active");
+    document.getElementById("tab-comms").classList.add("active");
+    if (!allAgentComms.length) loadAgentComms();
   }
 }
 
@@ -980,6 +1041,129 @@ async function createFile() {
     document.getElementById("create-file-form").style.display = "none";
     loadFiles();
   } catch (err) { alert("Create failed: " + err.message); }
+}
+
+// ── Agent Comms Tab ──
+
+function tagsOf(memory) {
+  return Array.isArray(memory.tags) ? memory.tags : [];
+}
+
+function priorityOf(memory) {
+  return tagsOf(memory).find(t => /^P[1-4]$/.test(t)) || "P4";
+}
+
+function artifactTypeOf(memory) {
+  return tagsOf(memory).find(t => ["prompt", "response", "flag"].includes(t)) || "artifact";
+}
+
+function artifactAgents(memory) {
+  const tags = tagsOf(memory);
+  const type = artifactTypeOf(memory);
+  const reserved = new Set(["agent-artifact", "prompt", "response", "flag", "P1", "P2", "P3", "P4"]);
+  const routeTags = tags.filter(t => !reserved.has(t));
+  if (type === "flag") return { from: routeTags[0] || "unknown", to: "human" };
+  return { from: routeTags[0] || "unknown", to: routeTags[1] || "unknown" };
+}
+
+function artifactTopic(memory) {
+  const tags = tagsOf(memory);
+  const reserved = new Set(["agent-artifact", "prompt", "response", "flag", "P1", "P2", "P3", "P4"]);
+  const routeTags = tags.filter(t => !reserved.has(t));
+  return routeTags[2] || (memory.summary || "untagged").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function artifactPath(memory) {
+  const match = (memory.content || "").match(/Artifact at ([^\n]+?\.md)\b/);
+  return match ? match[1] : "";
+}
+
+async function loadAgentComms() {
+  const list = document.getElementById("agent-comms-list");
+  try {
+    const data = await api("recent", { limit: 500, category: "project" });
+    const memories = data.memories || data || [];
+    allAgentComms = memories.filter(m => tagsOf(m).includes("agent-artifact"));
+    const agents = new Set();
+    for (const m of allAgentComms) {
+      const pair = artifactAgents(m);
+      agents.add(pair.from);
+      agents.add(pair.to);
+    }
+    const filter = document.getElementById("comms-agent-filter");
+    filter.innerHTML = '<option value="">All agents</option>' + [...agents]
+      .filter(Boolean)
+      .sort()
+      .map(agent => `<option value="${escAttr(agent)}">${escHtml(agent)}</option>`)
+      .join("");
+    renderAgentComms();
+  } catch (err) {
+    list.innerHTML = `<div class="empty">Error loading agent comms: ${escHtml(err.message)}</div>`;
+  }
+}
+
+function renderAgentComms() {
+  const list = document.getElementById("agent-comms-list");
+  const agentFilter = document.getElementById("comms-agent-filter").value;
+  const priorityFilter = document.getElementById("comms-priority-filter").value;
+  let items = [...allAgentComms];
+  if (agentFilter) {
+    items = items.filter(m => {
+      const pair = artifactAgents(m);
+      return pair.from === agentFilter || pair.to === agentFilter;
+    });
+  }
+  if (priorityFilter) items = items.filter(m => priorityOf(m) === priorityFilter);
+  items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  document.getElementById("comms-count").textContent = `${items.length} artifact${items.length === 1 ? "" : "s"}`;
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">No agent artifact pointers found.</div>';
+    return;
+  }
+
+  const byTopic = {};
+  for (const item of items) {
+    const topic = artifactTopic(item);
+    if (!byTopic[topic]) byTopic[topic] = [];
+    byTopic[topic].push(item);
+  }
+
+  list.innerHTML = Object.entries(byTopic).map(([topic, group]) => `
+    <div class="comms-thread">
+      <div class="comms-thread-title">${escHtml(topic)} (${group.length})</div>
+      <table class="comms-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Route</th>
+            <th>Kind</th>
+            <th>Priority</th>
+            <th>Summary</th>
+            <th>Artifact</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${group.map(renderAgentCommRow).join("")}
+        </tbody>
+      </table>
+    </div>
+  `).join("");
+}
+
+function renderAgentCommRow(memory) {
+  const pair = artifactAgents(memory);
+  const type = artifactTypeOf(memory);
+  const priority = priorityOf(memory);
+  const path = artifactPath(memory);
+  const href = path ? `file://${path}` : "#";
+  return `<tr>
+    <td>${formatDate(memory.created_at)}</td>
+    <td>${escHtml(pair.from)} → ${escHtml(pair.to)}</td>
+    <td><span class="comms-pill">${escHtml(type)}</span></td>
+    <td><span class="comms-pill ${priority.toLowerCase()}">${escHtml(priority)}</span></td>
+    <td>${escHtml(memory.summary || "(no summary)")}</td>
+    <td>${path ? `<a class="comms-link" href="${escAttr(href)}" target="_blank">${escHtml(path.split("/").pop())}</a>` : '<span class="comms-pill">missing path</span>'}</td>
+  </tr>`;
 }
 
 // ── Brain Map (Visual Tree) ──
