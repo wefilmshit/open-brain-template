@@ -1,0 +1,105 @@
+{
+  "run_date": "2026-05-04",
+  "timestamp": "2026-05-04T15:01:44.808Z",
+  "mcp_url": "https://personal-memory-mcp-http-production.up.railway.app",
+  "query_count": 6,
+  "ok_count": 6,
+  "results": [
+    {
+      "query": "what command does Tony use to deploy Supabase edge functions",
+      "hint": "concrete operational recall, should cite specific deploy command memory",
+      "ok": true,
+      "response": "**Tony deploys Supabase edge functions with:**\n\n```bash\nSUPABASE_ACCESS_TOKEN=$(cat ~/.supabase_access_token) supabase functions deploy <function-name> --project-ref inqwtstopucpxfnuisus\n```\n\nKey constraints (41019b03):\n- Token inline from `~/.supabase_access_token`\n- Always `--project-ref inqwtstopucpxfnuisus` (no linking)\n- Write function files to `/tmp/supabase-deploy/supabase/functions/<name>/index.ts` (not in project folder)\n\nDeploy from fresh worktree, not local clone (d022aa5c):\n```bash\nWORKTREE=/tmp/wfs-bolt-overhaul-v1-deploy-$(date +%s)\ngit worktree add --detach \"$WORKTREE\" origin/overhaul-v1\ncd \"$WORKTREE\"\nexport SUPABASE_ACCESS_TOKEN=$(cat ~/.supabase_access_token)\nsupabase functions deploy <name> --project-ref inqwtstopucpxfnuisus\ncd /Users/tonyfinley/Documents/WFS-Anthropic-Master/WFS-bolt\ngit worktree remove --force \"$WORKTREE\"\n```\n\nManual deploy is canonical; auto-deploy disabled (224a8855).",
+      "memory_ids": [
+        "41019b03",
+        "d022aa5c",
+        "224a8855"
+      ],
+      "iterations": 1,
+      "server_duration_ms": 26610,
+      "total_duration_ms": 27017,
+      "session_id": "sesn_011CahjK7UFGoag1HzidHxna",
+      "error": null
+    },
+    {
+      "query": "what are the critical rules for working with Tony given his ADHD and dyslexia",
+      "hint": "P1 rules, should cite multiple rule memories",
+      "ok": true,
+      "response": "Core P1 rules for working with Tony (ADHD + dyslexia):\n\n**Communication**\n- [wfs] (087c9482) ONE question at a time. Stacked questions = only the last one gets answered.\n- [personal] (1542d674) ONE step at a time. Stop. Wait. No walls of text. No multi-step lists. Under 60 words default.\n- [personal] (6dc27ac2) Full documents not fragments. No \"insert in section X\" instructions. Select All > Paste > Done.\n- [general] (00334d14) Never stop halfway through tasks. Just finish. Don't ask permission to keep going.\n\n**Process**\n- [wfs] (087c9482) STOP AND TALK before coding. Diagnose WITH Tony. Question the premise. Don't brute-force fixes.\n- [wfs] (087c9482) No em dashes. Use commas, periods, or shorter sentences.\n- [wfs] (087c9482) Keep explanations simple. Tony is a filmmaker, not a developer.\n- [general] (00334d14) Don't ask about internal bookkeeping (session checkpoints, memory IDs). Tony can't see these.\n\n**Tools**\n- [wfs] (087c9482) Direct tool hierarchy: (1) Direct code/API, (2) Chrome extension (web UI only), (3) Computer Use (Mac apps only). Never give Bolt prompts when direct GitHub push works.\n- [personal] (6dc27ac2) Tony does NOT want to run SQL himself. Use Supabase Management API or Chrome automation.\n\n**Workflow Philosophy**\n- [general] (53232e08) Session #51 framework: Stop > Talk > Diagnose > Challenge > Data > Code. Diagnosis first, code last.\n- [general] (c3a848cc) Let Bolt do as much work as possible. Don't make Tony read walls of text or code. Commit docs directly to repo, don't preview.\n\nSeven core memories covering communication, process, tools, workflow.",
+      "memory_ids": [
+        "087c9482",
+        "1542d674",
+        "6dc27ac2",
+        "00334d14",
+        "53232e08",
+        "c3a848cc"
+      ],
+      "iterations": 3,
+      "server_duration_ms": 47495,
+      "total_duration_ms": 47763,
+      "session_id": "sesn_011CahjM6J7fyMnhbRdrSkRW",
+      "error": null
+    },
+    {
+      "query": "what is the troubleshooting playbook when something breaks",
+      "hint": "P1 rules, should cite the troubleshooting playbook memory",
+      "ok": true,
+      "response": "**Found the P1 Troubleshooting Playbook.**\n\n[memory-file] (b4057b03) **Troubleshooting Playbook** — 5-step protocol when things break:\n\n1. **STOP.** Don't touch code. No deploys, no SQL, no debugging.\n\n2. **TALK.** Diagnose with Tony first. What's broken for the USER (not the error)? What still works? What was the GOAL?\n\n3. **LOOK AT DATA** before proposing fixes. Pull actual DB records. Compare outputs. Check what survived vs what was lost.\n\n4. **QUESTION THE PREMISE.** Do we even need this step? Is there a simpler path? Can we skip the hard part?\n\n5. **ONE thing at a time.** Do one thing. Talk about what we learned. Decide next step together. Don't stack 5 actions.\n\n**Anti-pattern:** See error > try fix > new error > fix that > repeat.  \n**Pattern that works:** Talk > data > question premise > real problem > simple solution appears.",
+      "memory_ids": [
+        "b4057b03"
+      ],
+      "iterations": 1,
+      "server_duration_ms": 27469,
+      "total_duration_ms": 27735,
+      "session_id": "sesn_011CahjQcWPr5v5a5qwQackX",
+      "error": null
+    },
+    {
+      "query": "what are the project guardrails around publicly using ICE and Tony being EP not a rep",
+      "hint": "P1 guardrails, should cite the project guardrails memory",
+      "ok": true,
+      "response": "Found one strong match about the LinkedIn campaign guardrail. Let me search more specifically for project guardrails document and Tony's EP role:Good, I found two key pieces. Let me now look for a comprehensive project guardrails document in memory-file:Perfect. Found the core P1 guardrails document (388e1e83). Both rules are explicitly stated:\n\n**Project guardrails around ICE and Tony's role:**\n\n[memory-file] (388e1e83) [P1] Rules -- Project Guardrails -- Hard rules about public content, Tony's role, and AI account access.\n\nThe two specific guardrails you asked about:\n\n1. **ICE naming:** NEVER use \"ICE\" publicly. Political connotations. Always spell out \"Intelligent Creative Engine.\"\n\n2. **Tony's role:** Tony is EP/Producer, NOT a rep. He produces spots and manages directors. Never call him a rep or agent.\n\nAdditional context found:\n- [project] (cf3b8600) LinkedIn teaser campaign avoids the public use of \"ICE\" and uses the full name \"Intelligent Creative Engine\"\n- [memory-file] (71719246) Business doc confirms Tony is EP/Line Producer and owner of WFS, loves being on set, is NOT a rep/agent",
+      "memory_ids": [
+        "388e1e83",
+        "cf3b8600",
+        "71719246"
+      ],
+      "iterations": 4,
+      "server_duration_ms": 50982,
+      "total_duration_ms": 51218,
+      "session_id": "sesn_011CahjSespSdPnavcP1i518",
+      "error": null
+    },
+    {
+      "query": "what are the technical gotchas around reanalysis version and HLS that keep getting repeated",
+      "hint": "should cite the gotchas memory",
+      "ok": true,
+      "response": "Two recurring gotchas found:\n\n**[memory-file] (d467364b) P1 Gotchas document**\n\n1. **Reanalysis Progress = `reanalysis_version`, NOT `analysis_version`**\n   - `analysis_version` = original upload analysis (most already v3)\n   - `reanalysis_version` = batch reanalyze cron progress tracking\n   - Correct query: `SELECT reanalysis_version, COUNT(*) FROM spots GROUP BY 1;`\n\n2. **Video Download = HLS Segments, NOT low.mp4**\n   - analyze-spot downloads via HLS (parses .m3u8, downloads fMP4 segments, concatenates)\n   - Do not suggest using low.mp4\n\n**[memory-file] (5665f8a5) Dedicated reanalysis_version reminder**\n- Reinforces the same mistake: tracking reanalysis progress using `analysis_version` instead of `reanalysis_version`\n\nBoth are documented as mistakes Claude keeps making repeatedly, wasting Tony's time.",
+      "memory_ids": [
+        "d467364b",
+        "5665f8a5"
+      ],
+      "iterations": 2,
+      "server_duration_ms": 32477,
+      "total_duration_ms": 32812,
+      "session_id": "sesn_011CahjWSBwZsuwQA6xF7hKi",
+      "error": null
+    },
+    {
+      "query": "how does the Memory Steward Managed Agent work and what agent id does it use",
+      "hint": "recent architecture memory from April 2026",
+      "ok": true,
+      "response": "Found two strong matches. Current production agent is v2.\n\n[technical] (b7696859) Memory Steward v2 agent_011CaFDqHFrhkvwMguYfMujf supersedes v1. Added memory-file category and unfiltered-first search strategy. Live on Railway via MEMORY_STEWARD_AGENT_ID. Model claude-sonnet-4-5. Beta managed-agents-2026-04-01.\n\n[technical] (2c278371) Memory Steward v1 agent_011CaEV1j798Ndaz1W2mXSer (kept for trace, superseded). Original creation Apr 20 2026. 5 custom tools. Environment env_018yPJrbrPW2h8KJynKEuTye.\n\n[technical] (c74923d2) Design doc with system prompt, orchestrator (Phase C listens to agent.custom_tool_use SSE, posts user.custom_tool_result to Supabase). Consumer (Phase D) is thin MCP bridge for Claude Code.\n\nHow it works: Session create POST /v1/sessions with {agent, environment_id, title}. SSE stream GET /sessions/{id}/events/stream. Tool result POST /sessions/{id}/events with type=user.custom_tool_result. Orchestrator executes custom_tool_use events against Supabase memory-api.",
+      "memory_ids": [
+        "b7696859",
+        "2c278371",
+        "c74923d2"
+      ],
+      "iterations": 2,
+      "server_duration_ms": 37505,
+      "total_duration_ms": 37739,
+      "session_id": "sesn_011CahjYr5SPE52bgZsPLXBk",
+      "error": null
+    }
+  ]
+}
