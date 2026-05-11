@@ -1,0 +1,97 @@
+{
+  "run_date": "2026-05-11",
+  "timestamp": "2026-05-11T15:51:21.167Z",
+  "mcp_url": "https://personal-memory-mcp-http-production.up.railway.app",
+  "query_count": 6,
+  "ok_count": 6,
+  "results": [
+    {
+      "query": "what command does Tony use to deploy Supabase edge functions",
+      "hint": "concrete operational recall, should cite specific deploy command memory",
+      "ok": true,
+      "response": "**Found it.**\n\n[technical] (41019b03) Tony deploys Supabase edge functions with:\n\n```bash\nSUPABASE_ACCESS_TOKEN=$(cat ~/.supabase_access_token) supabase functions deploy <function-name> --project-ref inqwtstopucpxfnuisus\n```\n\nToken is stored at `~/.supabase_access_token` (named \"Claude Code 4\", never expires).\n\n**Context:** Functions are written to `/tmp/supabase-deploy/supabase/functions/<name>/index.ts` before deploy, NOT in local project folders (which are read-only reference). Must deploy from a fresh git worktree pinned to origin/overhaul-v1, never directly from `/Users/tonyfinley/Documents/WFS-Anthropic-Master/WFS-bolt` (d022aa5c).",
+      "memory_ids": [
+        "41019b03",
+        "d022aa5c"
+      ],
+      "iterations": 1,
+      "server_duration_ms": 25922,
+      "total_duration_ms": 26300,
+      "session_id": "sesn_011d6FGJhwXHVXq3ETrSB9QS",
+      "error": null
+    },
+    {
+      "query": "what are the critical rules for working with Tony given his ADHD and dyslexia",
+      "hint": "P1 rules, should cite multiple rule memories",
+      "ok": true,
+      "response": "Found multiple high-priority rule memories covering Tony's ADHD and dyslexia needs. Here are the critical rules:\n\n**Communication**\n- [wfs] (087c9482) ONE question at a time. Stacked questions mean only the last one gets answered. Stop and talk before coding, question the premise.\n- [general] (00334d14) Never stop halfway through tasks. Don't ask permission to keep going, just finish.\n- [personal] (1542d674) ONE step at a time, under 60 words. No walls of text, no multi-step lists, no tables unless asked. Walls of text shut his brain down.\n- [personal] (6dc27ac2) Give ENTIRE updated documents, not fragments or \"insert here\" instructions. Select All > Paste > Done.\n\n**Writing Style**\n- [wfs] (087c9482) No em dashes. Use commas, periods, or shorter sentences. Keep explanations simple, Tony is a filmmaker not a developer.\n- [general] (c3a848cc) No walls of text or code to review. Commit docs directly to repo, don't paste back. Show screenshots and short summaries, not diffs.\n\n**Workflow**\n- [wfs] (087c9482) Don't ask about internal bookkeeping (session checkpoints, memory IDs). Tony never sees these.\n- [personal] (6dc27ac2) No filler questions. Tony doesn't run SQL himself, always use Chrome automation or Supabase Management API.\n- [general] (00334d14) Tony's exact words: \"my brain wants to default to just answering the last one you asked.. its my neurodivergence working lol\"",
+      "memory_ids": [
+        "087c9482",
+        "00334d14",
+        "1542d674",
+        "6dc27ac2",
+        "c3a848cc"
+      ],
+      "iterations": 3,
+      "server_duration_ms": 36226,
+      "total_duration_ms": 36513,
+      "session_id": "sesn_01WY7NhntyndvA9CXtvhtaeX",
+      "error": null
+    },
+    {
+      "query": "what is the troubleshooting playbook when something breaks",
+      "hint": "P1 rules, should cite the troubleshooting playbook memory",
+      "ok": true,
+      "response": "Found it. (b4057b03)\n\n[memory-file] Troubleshooting Playbook when something breaks:\n\n**1. STOP. Don't touch code.**  \nNo deploys, no SQL, no debugging. Just stop.\n\n**2. TALK. Diagnose with Tony.**  \nWhat's actually broken (not the error message, what the USER sees)? What still works? What was the GOAL?\n\n**3. LOOK AT DATA before proposing fixes.**  \nPull actual records from the DB. Compare outputs. Check what survived vs what was lost.\n\n**4. QUESTION THE PREMISE.**  \n\"Do we even need this step?\" \"Is there a simpler path?\" \"Can we skip the hard part?\"\n\n**5. ONE thing at a time.**  \nDo one thing. Talk about what we learned. Decide the next thing together. Don't stack 5 actions.\n\nThe anti-pattern (wastes days): See error > try to fix > creates new error > fix that > repeat\n\nThe pattern that works: Talk > look at data > question premise > find real problem > simple solution appears",
+      "memory_ids": [
+        "b4057b03"
+      ],
+      "iterations": 1,
+      "server_duration_ms": 25831,
+      "total_duration_ms": 26135,
+      "session_id": "sesn_01XfJBFvZgMa5JuDyGUQ8k4f",
+      "error": null
+    },
+    {
+      "query": "what are the project guardrails around publicly using ICE and Tony being EP not a rep",
+      "hint": "P1 guardrails, should cite the project guardrails memory",
+      "ok": true,
+      "response": "Found the public ICE naming guardrail. Now searching for the EP vs rep guardrail:Two P1 guardrails found:\n\n**ICE public naming** (faf5f080):  \nNever publicly refer to the Intelligent Creative Engine as \"ICE\" to avoid brand confusion or IP issues. Spell out the full name in public copy.\n\n**Tony's role** (f4769de4):  \nTony is EP/Line Producer, NOT a rep or agent. This distinction matters in public contexts.",
+      "memory_ids": [
+        "faf5f080",
+        "f4769de4"
+      ],
+      "iterations": 2,
+      "server_duration_ms": 36838,
+      "total_duration_ms": 37122,
+      "session_id": "sesn_01PBmckdNFjjrvoU5AituK9s",
+      "error": null
+    },
+    {
+      "query": "what are the technical gotchas around reanalysis version and HLS that keep getting repeated",
+      "hint": "should cite the gotchas memory",
+      "ok": true,
+      "response": "Found the gotchas memory. Here are the two technical mistakes that keep getting repeated:\n\n**[memory-file] (d467364b) Gotchas -- Common Mistakes Claude Keeps Making**\n\n### 1. Reanalysis Progress = `reanalysis_version`, NOT `analysis_version`\n- `analysis_version` = original upload analysis (most already v3)\n- `reanalysis_version` = batch reanalyze cron\n- **Correct:** `SELECT reanalysis_version, COUNT(*) FROM spots GROUP BY 1;`\n\n### 2. Video Download = HLS Segments, NOT low.mp4\n- analyze-spot downloads via HLS (parses .m3u8, downloads fMP4 segments, concatenates)\n- Don't suggest low.mp4",
+      "memory_ids": [
+        "d467364b"
+      ],
+      "iterations": 3,
+      "server_duration_ms": 26690,
+      "total_duration_ms": 26990,
+      "session_id": "sesn_01G2XsKaspGCX1k5XVgz7cV6",
+      "error": null
+    },
+    {
+      "query": "how does the Memory Steward Managed Agent work and what agent id does it use",
+      "hint": "recent architecture memory from April 2026",
+      "ok": true,
+      "response": "Found architecture details from April 2026.\n\n**Current production agent: agent_011CaFDqHFrhkvwMguYfMujf (v2)**\n\nHOW IT WORKS:\n- Anthropic Managed Agent running claude-sonnet-4-5 on beta managed-agents-2026-04-01\n- 5 custom tools: recall_smart, recent, remember, forget, stats\n- Orchestrator listens to agent.custom_tool_use SSE events, executes against Supabase memory-api, posts user.custom_tool_result back\n- Sessions created via POST /v1/sessions?beta=true with {agent, environment_id, title}\n- SSE stream via GET /sessions/{id}/events/stream?beta=true\n- Live on Railway service personal-memory-mcp-http via env var MEMORY_STEWARD_AGENT_ID\n- Environment: env_018yPJrbrPW2h8KJynKEuTye (shared with EP Brain, Creative Directions)\n\nV2 CHANGES:\n- Added memory-file category to tool enums and system prompt (v1 missed P1 rule memories because it didn't know this category existed)\n- Unfiltered-first search strategy (only filter by category when highly confident)\n- Multi-phrasing guidance (try 2-3 parallel queries before concluding not found)\n\nAGENT IDS:\n- Production: agent_011CaFDqHFrhkvwMguYfMujf (v2, created Apr 20 2026)\n- Superseded: agent_011CaEV1j798Ndaz1W2mXSer (v1, kept for trace)\n- Probe: agent_011CaEUrKcGFLcwL2ApGLrB2 (named \"_probe_delete_me\", harmless)\n\n[technical] (2c278371, b7696859, c74923d2)",
+      "memory_ids": [],
+      "iterations": 3,
+      "server_duration_ms": 35877,
+      "total_duration_ms": 36159,
+      "session_id": "sesn_01TF64TQt6usUNDz7LvkRAgo",
+      "error": null
+    }
+  ]
+}
