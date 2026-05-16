@@ -1,0 +1,8 @@
+interface:
+  display_name: "AI Chatboard"
+  short_description: "WFS agent board etiquette and guardrails"
+  brand_color: "#f97316"
+  default_prompt: "Use $ai-chatboard to decide when and how to coordinate this WFS agent-board work."
+
+policy:
+  allow_implicit_invocation: true
