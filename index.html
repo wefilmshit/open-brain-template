@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Brain — Memory Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #e0e0e8;
+    --text2: #8888a0;
+    --accent: #6c5ce7;
+    --accent2: #a29bfe;
+    --green: #00b894;
+    --orange: #fdcb6e;
+    --red: #e17055;
+    --blue: #74b9ff;
+    --pink: #fd79a8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px;
+  }
+  .header h1 { font-size: 1.4rem; font-weight: 600; }
+  .header h1 span { color: var(--accent2); }
+  .header .stats { font-size: 0.8rem; color: var(--text2); }
+
+  /* Login gate */
+  .gate {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 80vh; text-align: center; padding: 40px 20px;
+  }
+  .gate .login-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 48px 40px; max-width: 380px; width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .gate .login-emoji { font-size: 3rem; margin-bottom: 16px; }
+  .gate .login-title { font-size: 1.6rem; font-weight: 700; color: var(--accent2); margin-bottom: 6px; }
+  .gate .login-sub { font-size: 0.85rem; color: var(--text2); margin-bottom: 32px; }
+  .gate .login-error {
+    font-size: 0.8rem; color: var(--red); margin-top: 16px; display: none;
+    background: rgba(225,112,85,0.1); padding: 10px 16px; border-radius: 8px;
+  }
+  .google-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff; color: #3c4043; border: 1px solid #dadce0;
+    padding: 12px 24px; border-radius: 8px; font-size: 0.95rem;
+    cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 500; transition: box-shadow 0.2s, background 0.2s;
+    width: 100%; justify-content: center;
+  }
+  .google-btn:hover { background: #f7f8f8; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  .google-btn svg { width: 18px; height: 18px; }
+
+  /* Sign out button */
+  .sign-out-btn {
+    font-family: inherit; font-size: 0.75rem; padding: 6px 14px;
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 6px; cursor: pointer; transition: all 0.2s;
+  }
+  .sign-out-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex; gap: 4px; margin-bottom: 20px;
+    border-bottom: 1px solid var(--border); padding-bottom: 0;
+  }
+  .tab-btn {
+    font-family: inherit; font-size: 0.85rem; padding: 10px 20px;
+    background: transparent; color: var(--text2); border: none;
+    border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Search */
+  .search-bar {
+    display: flex; gap: 8px; margin-bottom: 20px;
+  }
+  .search-bar input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; font-family: inherit;
+  }
+  .search-bar input:focus { outline: none; border-color: var(--accent); }
+  .search-bar button {
+    background: var(--accent); color: white; border: none; padding: 10px 20px;
+    border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem;
+  }
+
+  /* Memory list */
+  .memory-list { display: flex; flex-direction: column; gap: 10px; }
+  .memory-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; cursor: pointer; transition: all 0.2s;
+  }
+  .memory-card:hover { border-color: var(--accent); }
+  .memory-card.expanded { border-color: var(--accent2); }
+  .memory-card .meta {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .memory-card .category {
+    font-size: 0.65rem; text-transform: uppercase; padding: 3px 8px;
+    border-radius: 4px; font-weight: 600;
+  }
+  .cat-project { background: #6c5ce722; color: var(--accent2); }
+  .cat-technical { background: #74b9ff22; color: var(--blue); }
+  .cat-personal { background: #00b89422; color: var(--green); }
+  .cat-wfs { background: #fdcb6e22; color: var(--orange); }
+  .cat-contact { background: #e1705522; color: var(--red); }
+  .cat-director { background: #fd79a822; color: var(--pink); }
+  .cat-memory-file { background: #a29bfe22; color: var(--accent2); }
+  .cat-general { background: #8888a022; color: var(--text2); }
+  .memory-card .date { font-size: 0.7rem; color: var(--text2); }
+  .memory-card .source { font-size: 0.65rem; color: var(--text2); opacity: 0.6; }
+  .memory-card .summary { font-size: 0.85rem; color: var(--text); line-height: 1.4; }
+  .memory-card .content {
+    display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    font-size: 0.8rem; color: var(--text2); line-height: 1.6; white-space: pre-wrap;
+  }
+  .memory-card.expanded .content { display: block; }
+  .memory-card .tags {
+    display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+  }
+  .memory-card .tag {
+    font-size: 0.6rem; background: var(--surface2); color: var(--text2);
+    padding: 2px 8px; border-radius: 3px;
+  }
+
+  /* Agent Comms */
+  .comms-toolbar {
+    display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+  }
+  .comms-toolbar select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 10px; border-radius: 6px; font-family: inherit; font-size: 0.8rem;
+  }
+  .comms-count { font-size: 0.75rem; color: var(--text2); margin-left: auto; }
+  .comms-thread { margin-bottom: 18px; }
+  .comms-thread-title {
+    font-size: 0.8rem; color: var(--accent2); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .comms-table {
+    width: 100%; border-collapse: collapse; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  }
+  .comms-table th, .comms-table td {
+    text-align: left; border-bottom: 1px solid var(--border); padding: 10px 12px;
+    font-size: 0.75rem; vertical-align: top;
+  }
+  .comms-table th { color: var(--text2); background: var(--surface2); font-weight: 600; }
+  .comms-table tr:last-child td { border-bottom: none; }
+  .comms-pill {
+    display: inline-block; padding: 2px 7px; border-radius: 4px;
+    background: var(--surface2); color: var(--text2); font-size: 0.65rem;
+  }
+  .comms-pill.p2 { background: #fdcb6e22; color: var(--orange); }
+  .comms-pill.p3 { background: #74b9ff22; color: var(--blue); }
+  .comms-pill.p4 { background: #00b89422; color: var(--green); }
+  .comms-link { color: var(--accent2); text-decoration: none; word-break: break-word; }
+  .comms-link:hover { text-decoration: underline; }
+
+  /* Action buttons */
+  .card-actions {
+    display: none; margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--border); gap: 8px;
+  }
+  .memory-card.expanded .card-actions { display: flex; }
+  .btn-sm {
+    font-family: inherit; font-size: 0.75rem; padding: 6px 14px;
+    border: none; border-radius: 6px; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-sm:hover { opacity: 0.85; }
+  .btn-edit { background: var(--accent); color: white; }
+  .btn-delete { background: var(--red); color: white; }
+  .btn-save { background: var(--green); color: white; }
+  .btn-cancel { background: var(--surface2); color: var(--text2); }
+
+  /* Inline edit form */
+  .edit-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .edit-form label { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; }
+  .edit-form input, .edit-form textarea, .edit-form select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; font-family: inherit;
+    width: 100%;
+  }
+  .edit-form textarea { min-height: 80px; resize: vertical; }
+  .edit-form input:focus, .edit-form textarea:focus { outline: none; border-color: var(--accent); }
+
+  .loading { text-align: center; padding: 40px; color: var(--text2); }
+  .empty { text-align: center; padding: 40px; color: var(--text2); font-style: italic; }
+
+  /* ── Editor Tab ── */
+  .editor-section {
+    margin-bottom: 24px;
+  }
+  .editor-section-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; margin-bottom: 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .editor-section-header:hover { border-color: var(--accent); }
+  .priority-badge {
+    font-size: 0.7rem; font-weight: 700; padding: 4px 10px;
+    border-radius: 6px; min-width: 28px; text-align: center;
+  }
+  .priority-1 { background: #e1705533; color: var(--red); }
+  .priority-2 { background: #fdcb6e33; color: var(--orange); }
+  .priority-3 { background: #74b9ff33; color: var(--blue); }
+  .priority-4 { background: #00b89433; color: var(--green); }
+  .priority-0 { background: #a29bfe33; color: var(--accent2); }
+  .priority-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+  .priority-desc { font-size: 0.75rem; color: var(--text2); margin-left: auto; }
+
+  .file-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 8px; margin-left: 20px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .file-card:hover { border-color: var(--accent); }
+  .file-card.expanded { border-color: var(--accent2); }
+  .file-card .file-meta {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;
+  }
+  .file-card .file-name { font-size: 0.85rem; font-weight: 600; color: var(--accent2); }
+  .file-card .file-type {
+    font-size: 0.6rem; text-transform: uppercase; padding: 2px 8px;
+    border-radius: 4px; font-weight: 600;
+  }
+  .type-feedback { background: #e1705522; color: var(--red); }
+  .type-reference { background: #74b9ff22; color: var(--blue); }
+  .type-user { background: #00b89422; color: var(--green); }
+  .type-project { background: #fdcb6e22; color: var(--orange); }
+  .type-unknown { background: var(--surface2); color: var(--text2); }
+  .type-index { background: #a29bfe22; color: var(--accent2); }
+  .file-card .file-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.4; }
+  .file-card .file-content {
+    display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    font-size: 0.8rem; color: var(--text2); line-height: 1.6; white-space: pre-wrap;
+  }
+  .file-card.expanded .file-content { display: block; }
+  .file-card .file-actions {
+    display: none; margin-top: 10px; padding-top: 8px;
+    border-top: 1px solid var(--border); gap: 8px;
+  }
+  .file-card.expanded .file-actions { display: flex; }
+
+  .file-edit-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .file-edit-form label { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; }
+  .file-edit-form textarea, .file-edit-form input, .file-edit-form select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; font-family: inherit;
+    width: 100%;
+  }
+  .file-edit-form textarea { min-height: 200px; resize: vertical; }
+  .file-edit-form textarea:focus, .file-edit-form input:focus { outline: none; border-color: var(--accent); }
+
+  .sync-bar {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    padding: 12px 16px; background: var(--surface); border-radius: 8px;
+    border: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .sync-bar .sync-info { font-size: 0.75rem; color: var(--text2); }
+  .sync-bar .sync-count { font-size: 0.85rem; color: var(--accent2); font-weight: 600; }
+
+  /* ── Brain Map Tab (Visual Tree) ── */
+  .brain-map-container {
+    position: relative; width: 100%; overflow-x: auto;
+    overflow-y: visible; padding-bottom: 40px;
+  }
+  .brain-map-svg {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  .brain-map-svg line, .brain-map-svg path {
+    stroke: var(--border); stroke-width: 1.5; fill: none; transition: opacity 0.3s;
+  }
+  .brain-map-content {
+    position: relative; z-index: 1; display: flex;
+    flex-direction: column; align-items: center; gap: 0;
+  }
+  .bm-tier {
+    display: flex; align-items: flex-start; width: 100%;
+    position: relative; padding: 16px 0;
+  }
+  .bm-tier-label {
+    position: absolute; left: 0; top: 18px;
+    writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+    font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--text2); opacity: 0.5;
+    white-space: nowrap; padding: 4px;
+  }
+  .bm-tier-nodes {
+    display: flex; justify-content: center; gap: 24px;
+    flex-wrap: wrap; width: 100%; padding-left: 28px;
+  }
+  .bm-root {
+    display: flex; flex-direction: column; align-items: center; margin-bottom: 8px;
+  }
+  .bm-root-circle {
+    width: 70px; height: 70px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; box-shadow: 0 0 30px rgba(108, 92, 231, 0.4);
+    cursor: default; transition: box-shadow 0.3s;
+  }
+  .bm-root-circle:hover { box-shadow: 0 0 50px rgba(108, 92, 231, 0.7); }
+  .bm-root-label {
+    margin-top: 8px; font-size: 0.75rem; font-weight: 700;
+    color: var(--accent2); text-transform: uppercase; letter-spacing: 2px;
+  }
+  .bm-node {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; transition: transform 0.2s; position: relative; min-width: 80px;
+  }
+  .bm-node:hover { transform: translateY(-3px); }
+  .bm-node-circle {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; border: 2px solid transparent;
+    transition: all 0.3s; position: relative;
+    box-shadow: 0 0 12px rgba(0,0,0,0.3);
+  }
+  .bm-node:hover .bm-node-circle {
+    box-shadow: 0 0 20px rgba(108,92,231,0.3); transform: scale(1.1);
+  }
+  .bm-node.expanded .bm-node-circle {
+    border-color: var(--accent2); box-shadow: 0 0 24px rgba(108,92,231,0.4);
+  }
+  .bm-node-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: var(--accent); color: white;
+    font-size: 0.55rem; font-weight: 700; padding: 2px 5px;
+    border-radius: 8px; min-width: 18px; text-align: center; line-height: 1.2;
+  }
+  .bm-node-label {
+    margin-top: 6px; font-size: 0.65rem; font-weight: 600;
+    color: var(--text2); text-align: center; max-width: 100px;
+    line-height: 1.3; transition: color 0.2s;
+  }
+  .bm-node:hover .bm-node-label { color: var(--text); }
+  .bm-node.expanded .bm-node-label { color: var(--accent2); }
+  .bm-tooltip {
+    display: none; position: absolute; top: -42px; left: 50%;
+    transform: translateX(-50%); background: var(--surface2);
+    border: 1px solid var(--border); color: var(--text);
+    padding: 6px 12px; border-radius: 6px; font-size: 0.7rem;
+    white-space: nowrap; z-index: 20;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4); pointer-events: none;
+  }
+  .bm-tooltip::after {
+    content: ""; position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%); border: 5px solid transparent;
+    border-top-color: var(--surface2);
+  }
+  .bm-node:hover .bm-tooltip { display: block; }
+  .bm-children-panel {
+    width: 100%; overflow: hidden; max-height: 0; opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+    padding: 0 28px;
+  }
+  .bm-children-panel.open { max-height: 4000px; opacity: 1; padding: 12px 28px 20px; }
+  .bm-children-inner {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .bm-children-title {
+    font-size: 0.8rem; font-weight: 700; color: var(--accent2);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .bm-children-title .close-btn {
+    margin-left: auto; font-size: 0.7rem; color: var(--text2);
+    cursor: pointer; padding: 2px 8px; border-radius: 4px;
+    background: var(--surface2); border: none; font-family: inherit;
+  }
+  .bm-children-title .close-btn:hover { color: var(--text); }
+  .bm-leaf {
+    padding: 8px 12px; margin: 2px 0; border-radius: 6px;
+    cursor: pointer; transition: all 0.2s; border-left: 2px solid transparent;
+  }
+  .bm-leaf:hover { background: var(--surface2); border-left-color: var(--accent); }
+  .bm-leaf.expanded { background: var(--surface2); border-left-color: var(--accent2); }
+  .bm-leaf-summary { font-size: 0.8rem; color: var(--text); line-height: 1.4; }
+  .bm-leaf-meta { display: flex; gap: 8px; margin-top: 3px; align-items: center; }
+  .bm-leaf-date { font-size: 0.65rem; color: var(--text2); }
+  .bm-leaf-source { font-size: 0.6rem; color: var(--text2); opacity: 0.6; }
+  .bm-leaf-content {
+    display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+    font-size: 0.75rem; color: var(--text2); line-height: 1.6; white-space: pre-wrap;
+    max-height: 200px; overflow-y: auto;
+  }
+  .bm-leaf.expanded .bm-leaf-content { display: block; }
+  .bm-leaf-actions {
+    display: none; margin-top: 8px; padding-top: 6px;
+    border-top: 1px solid var(--border); gap: 6px;
+  }
+  .bm-leaf.expanded .bm-leaf-actions { display: flex; }
+  .bm-subgroup { margin-top: 10px; }
+  .bm-subgroup-header {
+    font-size: 0.7rem; font-weight: 600; color: var(--text2);
+    padding: 6px 10px; cursor: pointer; display: flex;
+    align-items: center; gap: 6px; border-radius: 4px;
+    transition: background 0.2s; user-select: none;
+  }
+  .bm-subgroup-header:hover { background: var(--surface2); }
+  .bm-subgroup-arrow {
+    font-size: 0.55rem; transition: transform 0.2s; display: inline-block;
+  }
+  .bm-subgroup.collapsed .bm-subgroup-arrow { transform: rotate(-90deg); }
+  .bm-subgroup.collapsed .bm-subgroup-items { display: none; }
+  .bm-subgroup-count { font-size: 0.6rem; color: var(--text2); opacity: 0.5; margin-left: auto; }
+  .bm-connectors { width: 100%; pointer-events: none; position: absolute; top: 0; left: 0; }
+  .bm-tier-sep { width: 100%; height: 1px; background: var(--border); opacity: 0.3; margin: 4px 0; }
+  .bm-controls {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    padding: 12px 16px; background: var(--surface); border-radius: 8px;
+    border: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .bm-controls .bm-total { font-size: 1rem; color: var(--accent2); font-weight: 700; }
+  .bm-controls .bm-dots { display: flex; gap: 8px; align-items: center; margin-left: 8px; flex-wrap: wrap; }
+  .bm-dot-legend { display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; color: var(--text2); }
+  .bm-dot-legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .bm-controls .bm-btns { margin-left: auto; display: flex; gap: 6px; }
+
+  /* Search results overlay on brain map */
+  .bm-search-results {
+    margin-bottom: 16px; display: none;
+  }
+  .bm-search-results.active { display: block; }
+  .bm-search-results-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    font-size: 0.8rem; color: var(--text2);
+  }
+  .bm-search-results-header .count { color: var(--accent2); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="container" id="app">
+  <!-- Login gate -->
+  <div class="gate" id="gate">
+    <div class="login-card">
+      <div class="login-emoji">&#129504;</div>
+      <div class="login-title">Open Brain</div>
+      <div class="login-sub">Memory Dashboard</div>
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 010-9.18l-7.98-6.19a24.01 24.01 0 000 21.56l7.98-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- Main dashboard -->
+  <div id="dashboard" style="display: none;">
+    <div class="header">
+      <h1><span>Open Brain</span> — Memory Dashboard</h1>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="stats" id="header-stats"></div>
+        <button class="sign-out-btn" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('tree')">🧠 Brain Map</button>
+      <button class="tab-btn" onclick="switchTab('editor')">✏️ Editor</button>
+      <button class="tab-btn" onclick="switchTab('comms')">📬 Agent Comms</button>
+    </div>
+
+    <!-- Tab 1: Brain Map (default) -->
+    <div class="tab-content active" id="tab-tree">
+      <!-- Search bar on Brain Map -->
+      <div class="search-bar">
+        <input type="text" id="bm-search-input" placeholder="Search all memories..." onkeydown="if(event.key==='Enter')bmSearch()">
+        <button onclick="bmSearch()">Search</button>
+        <button onclick="bmClearSearch()" style="background: var(--surface2); color: var(--text2);">Clear</button>
+      </div>
+      <!-- Search results -->
+      <div class="bm-search-results" id="bm-search-results">
+        <div class="bm-search-results-header">
+          <span class="count" id="bm-search-count">0</span> results
+          <button class="btn-sm btn-cancel" onclick="bmClearSearch()" style="margin-left:auto;">Back to Brain Map</button>
+        </div>
+        <div class="memory-list" id="bm-search-list"></div>
+      </div>
+      <!-- Brain Map controls -->
+      <div class="bm-controls" id="bm-controls">
+        <span class="bm-total" id="bm-total">--</span>
+        <span style="font-size:0.75rem;color:var(--text2);">memories</span>
+        <div class="bm-dots" id="bm-dots"></div>
+        <div class="bm-btns">
+          <button class="btn-sm" style="background:var(--surface2);color:var(--text2);" onclick="bmExpandAll()">Expand All</button>
+          <button class="btn-sm" style="background:var(--surface2);color:var(--text2);" onclick="bmCollapseAll()">Collapse All</button>
+        </div>
+      </div>
+      <div id="brain-tree">
+        <div class="loading">Loading brain map...</div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Editor (Memory Files + Create New) -->
+    <div class="tab-content" id="tab-editor">
+      <div class="sync-bar">
+        <span class="sync-count" id="file-count">--</span>
+        <span class="sync-info">Memory files (source of truth in Supabase), grouped by load priority</span>
+        <button class="btn-sm btn-edit" onclick="showCreateFileForm()" style="margin-left: auto;">+ New File</button>
+      </div>
+      <div id="create-file-form" style="display:none; margin-bottom: 16px;">
+        <div class="file-card" style="border-color: var(--accent);">
+          <div class="file-edit-form">
+            <label>Name</label>
+            <input type="text" id="new-file-name" placeholder="e.g. Rules -- My New Rule">
+            <label>Description</label>
+            <input type="text" id="new-file-desc" placeholder="Short description of what this file covers">
+            <label>Type</label>
+            <select id="new-file-type">
+              <option value="feedback">feedback (rules)</option>
+              <option value="reference">reference</option>
+              <option value="user">user (business)</option>
+              <option value="project">project</option>
+            </select>
+            <label>Load Priority</label>
+            <select id="new-file-priority">
+              <option value="1">P1 — Read Every Session</option>
+              <option value="2" selected>P2 — Reference</option>
+              <option value="3">P3 — Runbooks & Specs</option>
+              <option value="4">P4 — Integrations</option>
+            </select>
+            <label>Content (markdown)</label>
+            <textarea id="new-file-content" placeholder="File content..." style="min-height:150px;"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn-sm btn-save" onclick="createFile()">Create</button>
+              <button class="btn-sm btn-cancel" onclick="document.getElementById('create-file-form').style.display='none'">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="file-tree">
+        <div class="loading">Loading memory files...</div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Agent Comms -->
+    <div class="tab-content" id="tab-comms">
+      <div class="comms-toolbar">
+        <span style="font-size:0.8rem;color:var(--text2);">Agent artifact pointers</span>
+        <select id="comms-agent-filter" onchange="renderAgentComms()">
+          <option value="">All agents</option>
+        </select>
+        <select id="comms-priority-filter" onchange="renderAgentComms()">
+          <option value="">All priorities</option>
+          <option value="P2">P2 action</option>
+          <option value="P3">P3 review</option>
+          <option value="P4">P4 reference</option>
+        </select>
+        <span class="comms-count" id="comms-count">--</span>
+      </div>
+      <div id="agent-comms-list">
+        <div class="loading">Loading agent comms...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Supabase Auth ──
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const ALLOWED_EMAILS = []; // Add your email(s) here, e.g. ['you@example.com']
+
+const _rawHash = window.location.hash;
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { flowType: 'implicit' }
+});
+
+let accessToken = "";
+let allMemories = [];
+let allFiles = [];
+let allAgentComms = [];
+let activeTab = "tree";
+let treeLoaded = false;
+
+function dbg(msg) { console.log('[OB]', msg); }
+
+function api(path, params = {}, { method = "GET", body = null } = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const opts = {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+    },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(`/api/${path}?${qs}`, opts).then(r => {
+    if (r.status === 401) { signOut(); throw new Error("Unauthorized"); }
+    return r.json();
+  });
+}
+
+async function signInWithGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  });
+  if (error) dbg('OAuth error: ' + error.message);
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  accessToken = "";
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("gate").style.display = "flex";
+}
+
+function handleSession(session) {
+  if (!session) return false;
+  const email = session.user?.email;
+  dbg('Session found: ' + email);
+  if (!ALLOWED_EMAILS.includes(email)) {
+    dbg('Email NOT in allowlist');
+    sb.auth.signOut();
+    return false;
+  }
+  accessToken = session.access_token;
+  document.getElementById("gate").style.display = "none";
+  initDashboard();
+  return true;
+}
+
+// Main auth flow
+(async () => {
+  if (_rawHash && _rawHash.includes('access_token')) {
+    dbg('Found access_token in hash, calling setSession...');
+    const params = new URLSearchParams(_rawHash.substring(1));
+    const at = params.get('access_token');
+    const rt = params.get('refresh_token');
+    if (at && rt) {
+      const { data, error } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
+      dbg('setSession result: session=' + (data?.session ? 'YES' : 'null') + ' error=' + (error?.message || 'none'));
+      history.replaceState(null, '', window.location.pathname);
+      if (data?.session && handleSession(data.session)) return;
+    }
+  }
+  const { data: { session } } = await sb.auth.getSession();
+  if (handleSession(session)) return;
+  document.getElementById("gate").style.display = "flex";
+})();
+
+sb.auth.onAuthStateChange((event, session) => {
+  dbg('onAuthStateChange: ' + event);
+  if (event === 'SIGNED_OUT') {
+    accessToken = "";
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("gate").style.display = "flex";
+  }
+});
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+  const tabs = document.querySelectorAll(".tab-btn");
+  if (tab === "tree") {
+    tabs[0].classList.add("active");
+    document.getElementById("tab-tree").classList.add("active");
+    if (!treeLoaded) loadTree();
+  } else if (tab === "editor") {
+    tabs[1].classList.add("active");
+    document.getElementById("tab-editor").classList.add("active");
+    if (!allFiles.length) loadFiles();
+  } else if (tab === "comms") {
+    tabs[2].classList.add("active");
+    document.getElementById("tab-comms").classList.add("active");
+    if (!allAgentComms.length) loadAgentComms();
+  }
+}
+
+function formatDate(d) {
+  const dt = new Date(d);
+  const now = new Date();
+  const diffMs = now - dt;
+  const diffH = Math.floor(diffMs / 3600000);
+  if (diffH < 1) return `${Math.floor(diffMs/60000)}m ago`;
+  if (diffH < 24) return `${diffH}h ago`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `${diffD}d ago`;
+  return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function catClass(cat) { return `cat-${(cat || "project").toLowerCase().replace(/\s+/g, "-")}`; }
+function escHtml(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+function escAttr(s) { return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function toggleCard(e, card) {
+  if (e.target.closest(".edit-form") || e.target.closest(".file-edit-form") || e.target.closest(".btn-sm") || e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+  card.classList.toggle("expanded");
+}
+
+// ── Brain Map Search ──
+async function bmSearch() {
+  const q = document.getElementById("bm-search-input").value.trim();
+  if (!q) return;
+  const resultsDiv = document.getElementById("bm-search-results");
+  const listDiv = document.getElementById("bm-search-list");
+  const controls = document.getElementById("bm-controls");
+  const tree = document.getElementById("brain-tree");
+
+  listDiv.innerHTML = '<div class="loading">Searching...</div>';
+  resultsDiv.classList.add("active");
+  controls.style.display = "none";
+  tree.style.display = "none";
+
+  try {
+    const data = await api("search", { q, limit: 50 });
+    const memories = data.results || data.memories || data || [];
+    document.getElementById("bm-search-count").textContent = memories.length;
+
+    if (!memories.length) {
+      listDiv.innerHTML = '<div class="empty">No results found.</div>';
+      return;
+    }
+
+    listDiv.innerHTML = memories.map(m => {
+      const tags = (m.tags || []).map(t => escHtml(t));
+      return `
+      <div class="memory-card" data-id="${escHtml(m.id || "")}" onclick="toggleCard(event, this)">
+        <div class="meta">
+          <span class="category ${catClass(m.category)}">${m.category || "unknown"}</span>
+          <span class="date">${formatDate(m.created_at)}</span>
+          <span class="source">${m.source || ""}</span>
+        </div>
+        <div class="summary">${escHtml(m.summary || "(no summary)")}</div>
+        <div class="content">${escHtml(m.content || "")}</div>
+        ${tags.length ? `<div class="tags">${tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>` : ""}
+        <div class="card-actions">
+          <button class="btn-sm btn-edit" onclick="startSearchEdit(event, this.closest('.memory-card'))">Edit</button>
+          <button class="btn-sm btn-delete" onclick="deleteSearchMemory(event, this.closest('.memory-card'))">Delete</button>
+        </div>
+      </div>`;
+    }).join("");
+  } catch (err) {
+    listDiv.innerHTML = `<div class="empty">Search error: ${escHtml(err.message)}</div>`;
+  }
+}
+
+function bmClearSearch() {
+  document.getElementById("bm-search-input").value = "";
+  document.getElementById("bm-search-results").classList.remove("active");
+  document.getElementById("bm-controls").style.display = "";
+  document.getElementById("brain-tree").style.display = "";
+}
+
+async function deleteSearchMemory(e, card) {
+  e.stopPropagation();
+  if (!confirm("Delete this memory?")) return;
+  const id = card.dataset.id;
+  try {
+    await api("delete", {}, { method: "DELETE", body: { id } });
+    card.remove();
+  } catch (err) { alert("Delete failed: " + err.message); }
+}
+
+function startSearchEdit(e, card) {
+  e.stopPropagation();
+  const id = card.dataset.id;
+  const summaryEl = card.querySelector(".summary");
+  const contentEl = card.querySelector(".content");
+  const actionsEl = card.querySelector(".card-actions");
+
+  actionsEl.innerHTML = `
+    <button class="btn-sm btn-save" onclick="saveSearchEdit(event, this.closest('.memory-card'))">Save</button>
+    <button class="btn-sm btn-cancel" onclick="cancelSearchEdit(event, this.closest('.memory-card'))">Cancel</button>
+  `;
+  const form = document.createElement("div");
+  form.className = "edit-form";
+  form.innerHTML = `
+    <label>Summary</label>
+    <input type="text" name="summary" value="${escAttr(summaryEl.textContent)}">
+    <label>Content</label>
+    <textarea name="content">${escHtml(contentEl.textContent)}</textarea>
+    <label>Category</label>
+    <input type="text" name="category" value="${escAttr(card.querySelector('.category')?.textContent || '')}">
+    <label>Tags (comma-separated)</label>
+    <input type="text" name="tags" value="">
+  `;
+  actionsEl.before(form);
+  summaryEl.style.display = "none";
+  contentEl.style.display = "none";
+}
+
+function cancelSearchEdit(e, card) {
+  e.stopPropagation();
+  const form = card.querySelector(".edit-form");
+  if (form) form.remove();
+  card.querySelector(".summary").style.display = "";
+  card.querySelector(".content").style.display = "";
+  card.querySelector(".card-actions").innerHTML = `
+    <button class="btn-sm btn-edit" onclick="startSearchEdit(event, this.closest('.memory-card'))">Edit</button>
+    <button class="btn-sm btn-delete" onclick="deleteSearchMemory(event, this.closest('.memory-card'))">Delete</button>
+  `;
+}
+
+async function saveSearchEdit(e, card) {
+  e.stopPropagation();
+  const id = card.dataset.id;
+  const form = card.querySelector(".edit-form");
+  const summary = form.querySelector('[name="summary"]').value.trim();
+  const content = form.querySelector('[name="content"]').value.trim();
+  const category = form.querySelector('[name="category"]').value.trim();
+  const tags = form.querySelector('[name="tags"]').value.split(",").map(t => t.trim()).filter(Boolean);
+
+  try {
+    await api("update", {}, { method: "PUT", body: { id, content, summary, category, tags } });
+    form.remove();
+    card.querySelector(".summary").textContent = summary;
+    card.querySelector(".summary").style.display = "";
+    card.querySelector(".content").textContent = content;
+    card.querySelector(".content").style.display = "";
+    const catEl = card.querySelector(".category");
+    catEl.textContent = category || "unknown";
+    catEl.className = `category ${catClass(category)}`;
+    card.querySelector(".card-actions").innerHTML = `
+      <button class="btn-sm btn-edit" onclick="startSearchEdit(event, this.closest('.memory-card'))">Edit</button>
+      <button class="btn-sm btn-delete" onclick="deleteSearchMemory(event, this.closest('.memory-card'))">Delete</button>
+    `;
+  } catch (err) { alert("Save failed: " + err.message); }
+}
+
+// ── Editor Tab (Memory Files) ──
+
+const PRIORITY_LABELS = {
+  0: { label: "Index", desc: "Master index file" },
+  1: { label: "Priority 1 — Read Every Session", desc: "Rules and guardrails. Loaded before any work begins." },
+  2: { label: "Priority 2 — Reference", desc: "Tech stack, pipeline, workflow. Read when working on related systems." },
+  3: { label: "Priority 3 — Runbooks & Specs", desc: "How things work. Read before touching these systems." },
+  4: { label: "Priority 4 — Integrations", desc: "Read when relevant to the current task." },
+};
+
+async function loadFiles() {
+  const tree = document.getElementById("file-tree");
+  try {
+    const data = await api("recent", { limit: 100, category: "memory-file" });
+    allFiles = data.memories || data || [];
+    if (!allFiles.length) {
+      tree.innerHTML = '<div class="empty">No memory files yet. Click "+ New File" to create one.</div>';
+      return;
+    }
+    document.getElementById("file-count").textContent = allFiles.length;
+    const groups = {};
+    for (const file of allFiles) {
+      const p = file.metadata?.load_priority ?? 5;
+      if (!groups[p]) groups[p] = [];
+      groups[p].push(file);
+    }
+    for (const p in groups) groups[p].sort((a, b) => (a.metadata?.name || "").localeCompare(b.metadata?.name || ""));
+    const priorities = Object.keys(groups).map(Number).sort();
+    tree.innerHTML = priorities.map(p => {
+      const info = PRIORITY_LABELS[p] || { label: `Priority ${p}`, desc: "" };
+      const files = groups[p];
+      return `
+        <div class="editor-section">
+          <div class="editor-section-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+            <span class="priority-badge priority-${p}">P${p}</span>
+            <span class="priority-title">${escHtml(info.label)}</span>
+            <span class="priority-desc">${files.length} file${files.length !== 1 ? "s" : ""} — ${escHtml(info.desc)}</span>
+          </div>
+          <div>${files.map(f => renderFileCard(f)).join("")}</div>
+        </div>`;
+    }).join("");
+  } catch (err) {
+    tree.innerHTML = `<div class="empty">Error loading files: ${escHtml(err.message)}</div>`;
+  }
+}
+
+function renderFileCard(f) {
+  const meta = f.metadata || {};
+  const fileName = meta.file_name || "unknown";
+  const fileType = meta.file_type || "unknown";
+  const desc = meta.description || "";
+  const name = meta.name || fileName;
+  return `
+    <div class="file-card" data-id="${escHtml(f.id)}" onclick="toggleCard(event, this)">
+      <div class="file-meta">
+        <span class="file-name">${escHtml(name)}</span>
+        <span class="file-type type-${fileType}">${fileType}</span>
+        <span style="font-size:0.65rem;color:var(--text2);margin-left:auto;">${escHtml(fileName)}</span>
+      </div>
+      <div class="file-desc">${escHtml(desc)}</div>
+      <div class="file-content">${escHtml(f.content || "")}</div>
+      <div class="file-actions">
+        <button class="btn-sm btn-edit" onclick="startFileEdit(event, this.closest('.file-card'))">Edit</button>
+        <button class="btn-sm btn-delete" onclick="deleteFile(event, this.closest('.file-card'))">Delete</button>
+      </div>
+    </div>`;
+}
+
+function startFileEdit(e, card) {
+  e.stopPropagation();
+  const id = card.dataset.id;
+  const file = allFiles.find(f => f.id === id);
+  if (!file) return;
+  const meta = file.metadata || {};
+  const descEl = card.querySelector(".file-desc");
+  const contentEl = card.querySelector(".file-content");
+  const actionsEl = card.querySelector(".file-actions");
+  actionsEl.innerHTML = `
+    <button class="btn-sm btn-save" onclick="saveFileEdit(event, this.closest('.file-card'))">Save</button>
+    <button class="btn-sm btn-cancel" onclick="cancelFileEdit(event, this.closest('.file-card'))">Cancel</button>
+  `;
+  const form = document.createElement("div");
+  form.className = "file-edit-form";
+  form.innerHTML = `
+    <label>Name</label>
+    <input type="text" name="name" value="${escAttr(meta.name || "")}">
+    <label>Description</label>
+    <input type="text" name="description" value="${escAttr(meta.description || "")}">
+    <label>Type</label>
+    <select name="file_type">
+      <option value="feedback" ${meta.file_type === "feedback" ? "selected" : ""}>feedback (rules)</option>
+      <option value="reference" ${meta.file_type === "reference" ? "selected" : ""}>reference</option>
+      <option value="user" ${meta.file_type === "user" ? "selected" : ""}>user (business)</option>
+      <option value="project" ${meta.file_type === "project" ? "selected" : ""}>project</option>
+      <option value="index" ${meta.file_type === "index" ? "selected" : ""}>index</option>
+    </select>
+    <label>Load Priority</label>
+    <select name="priority">
+      <option value="0" ${meta.load_priority === 0 ? "selected" : ""}>P0 — Index</option>
+      <option value="1" ${meta.load_priority === 1 ? "selected" : ""}>P1 — Read Every Session</option>
+      <option value="2" ${meta.load_priority === 2 ? "selected" : ""}>P2 — Reference</option>
+      <option value="3" ${meta.load_priority === 3 ? "selected" : ""}>P3 — Runbooks & Specs</option>
+      <option value="4" ${meta.load_priority === 4 ? "selected" : ""}>P4 — Integrations</option>
+    </select>
+    <label>Content (markdown)</label>
+    <textarea name="content">${escHtml(file.content || "")}</textarea>
+  `;
+  actionsEl.before(form);
+  descEl.style.display = "none";
+  contentEl.style.display = "none";
+}
+
+function cancelFileEdit(e, card) {
+  e.stopPropagation();
+  const form = card.querySelector(".file-edit-form");
+  if (form) form.remove();
+  card.querySelector(".file-desc").style.display = "";
+  card.querySelector(".file-content").style.display = "";
+  card.querySelector(".file-actions").innerHTML = `
+    <button class="btn-sm btn-edit" onclick="startFileEdit(event, this.closest('.file-card'))">Edit</button>
+    <button class="btn-sm btn-delete" onclick="deleteFile(event, this.closest('.file-card'))">Delete</button>
+  `;
+}
+
+async function saveFileEdit(e, card) {
+  e.stopPropagation();
+  const id = card.dataset.id;
+  const form = card.querySelector(".file-edit-form");
+  const content = form.querySelector('[name="content"]').value.trim();
+  const name = form.querySelector('[name="name"]').value.trim();
+  const description = form.querySelector('[name="description"]').value.trim();
+  const file_type = form.querySelector('[name="file_type"]').value;
+  const priority = parseInt(form.querySelector('[name="priority"]').value);
+  const file = allFiles.find(f => f.id === id);
+  if (!file) return;
+  const meta = { ...(file.metadata || {}), name, description, file_type, load_priority: priority, synced_at: new Date().toISOString() };
+  const summary = `[P${priority}] ${name} — ${description}`;
+  try {
+    await api("update", {}, { method: "PUT", body: {
+      id, content, summary, category: "memory-file",
+      tags: [`priority-${priority}`, file_type, name.toLowerCase().replace(/[^a-z0-9]+/g, "-")],
+      metadata: meta,
+    }});
+    file.content = content; file.summary = summary; file.metadata = meta;
+    form.remove();
+    card.querySelector(".file-name").textContent = name;
+    card.querySelector(".file-desc").textContent = description;
+    card.querySelector(".file-desc").style.display = "";
+    card.querySelector(".file-content").textContent = content;
+    card.querySelector(".file-content").style.display = "";
+    card.querySelector(".file-actions").innerHTML = `
+      <button class="btn-sm btn-edit" onclick="startFileEdit(event, this.closest('.file-card'))">Edit</button>
+      <button class="btn-sm btn-delete" onclick="deleteFile(event, this.closest('.file-card'))">Delete</button>
+    `;
+  } catch (err) { alert("Save failed: " + err.message); }
+}
+
+async function deleteFile(e, card) {
+  e.stopPropagation();
+  const id = card.dataset.id;
+  const file = allFiles.find(f => f.id === id);
+  const name = file?.metadata?.name || "this file";
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  try {
+    await api("delete", {}, { method: "DELETE", body: { id } });
+    allFiles = allFiles.filter(f => f.id !== id);
+    card.remove();
+    document.getElementById("file-count").textContent = allFiles.length;
+  } catch (err) { alert("Delete failed: " + err.message); }
+}
+
+function showCreateFileForm() {
+  document.getElementById("create-file-form").style.display = "block";
+  document.getElementById("new-file-name").focus();
+}
+
+async function createFile() {
+  const name = document.getElementById("new-file-name").value.trim();
+  const description = document.getElementById("new-file-desc").value.trim();
+  const file_type = document.getElementById("new-file-type").value;
+  const priority = parseInt(document.getElementById("new-file-priority").value);
+  const content = document.getElementById("new-file-content").value.trim();
+  if (!name || !content) { alert("Name and content are required."); return; }
+  const summary = `[P${priority}] ${name} — ${description}`;
+  const metadata = { name, description, file_type, load_priority: priority, file_name: name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".md", synced_at: new Date().toISOString() };
+  try {
+    await api("add", {}, { method: "POST", body: { content, summary, category: "memory-file", source: "open-brain", tags: [`priority-${priority}`, file_type, metadata.file_name.replace(".md", "")], metadata }});
+    document.getElementById("new-file-name").value = "";
+    document.getElementById("new-file-desc").value = "";
+    document.getElementById("new-file-content").value = "";
+    document.getElementById("create-file-form").style.display = "none";
+    loadFiles();
+  } catch (err) { alert("Create failed: " + err.message); }
+}
+
+// ── Agent Comms Tab ──
+
+function tagsOf(memory) {
+  return Array.isArray(memory.tags) ? memory.tags : [];
+}
+
+function priorityOf(memory) {
+  return tagsOf(memory).find(t => /^P[1-4]$/.test(t)) || "P4";
+}
+
+function artifactTypeOf(memory) {
+  return tagsOf(memory).find(t => ["prompt", "response", "flag"].includes(t)) || "artifact";
+}
+
+function artifactAgents(memory) {
+  const tags = tagsOf(memory);
+  const type = artifactTypeOf(memory);
+  const reserved = new Set(["agent-artifact", "prompt", "response", "flag", "P1", "P2", "P3", "P4"]);
+  const routeTags = tags.filter(t => !reserved.has(t));
+  if (type === "flag") return { from: routeTags[0] || "unknown", to: "human" };
+  return { from: routeTags[0] || "unknown", to: routeTags[1] || "unknown" };
+}
+
+function artifactTopic(memory) {
+  const tags = tagsOf(memory);
+  const reserved = new Set(["agent-artifact", "prompt", "response", "flag", "P1", "P2", "P3", "P4"]);
+  const routeTags = tags.filter(t => !reserved.has(t));
+  return routeTags[2] || (memory.summary || "untagged").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function artifactPath(memory) {
+  const match = (memory.content || "").match(/Artifact at ([^\n]+?\.md)\b/);
+  return match ? match[1] : "";
+}
+
+async function loadAgentComms() {
+  const list = document.getElementById("agent-comms-list");
+  try {
+    const data = await api("recent", { limit: 500, category: "project" });
+    const memories = data.memories || data || [];
+    allAgentComms = memories.filter(m => tagsOf(m).includes("agent-artifact"));
+    const agents = new Set();
+    for (const m of allAgentComms) {
+      const pair = artifactAgents(m);
+      agents.add(pair.from);
+      agents.add(pair.to);
+    }
+    const filter = document.getElementById("comms-agent-filter");
+    filter.innerHTML = '<option value="">All agents</option>' + [...agents]
+      .filter(Boolean)
+      .sort()
+      .map(agent => `<option value="${escAttr(agent)}">${escHtml(agent)}</option>`)
+      .join("");
+    renderAgentComms();
+  } catch (err) {
+    list.innerHTML = `<div class="empty">Error loading agent comms: ${escHtml(err.message)}</div>`;
+  }
+}
+
+function renderAgentComms() {
+  const list = document.getElementById("agent-comms-list");
+  const agentFilter = document.getElementById("comms-agent-filter").value;
+  const priorityFilter = document.getElementById("comms-priority-filter").value;
+  let items = [...allAgentComms];
+  if (agentFilter) {
+    items = items.filter(m => {
+      const pair = artifactAgents(m);
+      return pair.from === agentFilter || pair.to === agentFilter;
+    });
+  }
+  if (priorityFilter) items = items.filter(m => priorityOf(m) === priorityFilter);
+  items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  document.getElementById("comms-count").textContent = `${items.length} artifact${items.length === 1 ? "" : "s"}`;
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">No agent artifact pointers found.</div>';
+    return;
+  }
+
+  const byTopic = {};
+  for (const item of items) {
+    const topic = artifactTopic(item);
+    if (!byTopic[topic]) byTopic[topic] = [];
+    byTopic[topic].push(item);
+  }
+
+  list.innerHTML = Object.entries(byTopic).map(([topic, group]) => `
+    <div class="comms-thread">
+      <div class="comms-thread-title">${escHtml(topic)} (${group.length})</div>
+      <table class="comms-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Route</th>
+            <th>Kind</th>
+            <th>Priority</th>
+            <th>Summary</th>
+            <th>Artifact</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${group.map(renderAgentCommRow).join("")}
+        </tbody>
+      </table>
+    </div>
+  `).join("");
+}
+
+function renderAgentCommRow(memory) {
+  const pair = artifactAgents(memory);
+  const type = artifactTypeOf(memory);
+  const priority = priorityOf(memory);
+  const path = artifactPath(memory);
+  const href = path ? `file://${path}` : "#";
+  return `<tr>
+    <td>${formatDate(memory.created_at)}</td>
+    <td>${escHtml(pair.from)} → ${escHtml(pair.to)}</td>
+    <td><span class="comms-pill">${escHtml(type)}</span></td>
+    <td><span class="comms-pill ${priority.toLowerCase()}">${escHtml(priority)}</span></td>
+    <td>${escHtml(memory.summary || "(no summary)")}</td>
+    <td>${path ? `<a class="comms-link" href="${escAttr(href)}" target="_blank">${escHtml(path.split("/").pop())}</a>` : '<span class="comms-pill">missing path</span>'}</td>
+  </tr>`;
+}
+
+// ── Brain Map (Visual Tree) ──
+
+const CAT_COLORS = {
+  project: "#a29bfe", technical: "#74b9ff", personal: "#00b894",
+  wfs: "#fdcb6e", contact: "#e17055", general: "#8888a0", "memory-file": "#a29bfe"
+};
+const CAT_EMOJI = {
+  project: "🟣", technical: "🔵", personal: "🟢",
+  wfs: "🟠", contact: "🔴", general: "⚪"
+};
+
+let bmOpenPanel = null;
+
+function bmExpandAll() {
+  document.querySelectorAll(".bm-children-panel").forEach(p => p.classList.add("open"));
+  document.querySelectorAll(".bm-node").forEach(n => n.classList.add("expanded"));
+  document.querySelectorAll(".bm-subgroup").forEach(s => s.classList.remove("collapsed"));
+  setTimeout(bmDrawLines, 100);
+}
+
+function bmCollapseAll() {
+  document.querySelectorAll(".bm-children-panel.open").forEach(p => p.classList.remove("open"));
+  document.querySelectorAll(".bm-node.expanded").forEach(n => n.classList.remove("expanded"));
+  document.querySelectorAll(".bm-subgroup").forEach(s => s.classList.add("collapsed"));
+  bmOpenPanel = null;
+  setTimeout(bmDrawLines, 100);
+}
+
+function bmToggleNode(panelId, nodeEl) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const isOpen = panel.classList.contains("open");
+  document.querySelectorAll(".bm-children-panel.open").forEach(p => p.classList.remove("open"));
+  document.querySelectorAll(".bm-node.expanded").forEach(n => n.classList.remove("expanded"));
+  if (!isOpen) {
+    panel.classList.add("open");
+    nodeEl.classList.add("expanded");
+    bmOpenPanel = panelId;
+    setTimeout(() => panel.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
+  } else {
+    bmOpenPanel = null;
+  }
+  setTimeout(bmDrawLines, 100);
+}
+
+function bmToggleSubgroup(el) { el.closest(".bm-subgroup").classList.toggle("collapsed"); }
+function bmToggleLeaf(el) { el.classList.toggle("expanded"); }
+
+function bmRenderLeaf(m) {
+  const id = m.id || "";
+  return `<div class="bm-leaf" data-id="${escHtml(id)}" onclick="bmToggleLeaf(this)">
+    <div class="bm-leaf-summary">${escHtml(m.summary || "(no summary)")}</div>
+    <div class="bm-leaf-meta">
+      <span class="bm-leaf-date">${formatDate(m.created_at)}</span>
+      <span class="bm-leaf-source">${m.source || ""}</span>
+    </div>
+    <div class="bm-leaf-content">${escHtml(m.content || "")}</div>
+    <div class="bm-leaf-actions">
+      <button class="btn-sm btn-edit" onclick="event.stopPropagation();bmEditLeaf(this.closest('.bm-leaf'))">Edit</button>
+      <button class="btn-sm btn-delete" onclick="event.stopPropagation();bmDeleteLeaf(this.closest('.bm-leaf'))">Delete</button>
+    </div>
+  </div>`;
+}
+
+async function bmDeleteLeaf(leaf) {
+  if (!confirm("Delete this memory?")) return;
+  const id = leaf.dataset.id;
+  try {
+    await api("delete", {}, { method: "DELETE", body: { id } });
+    leaf.remove();
+  } catch (err) { alert("Delete failed: " + err.message); }
+}
+
+function bmEditLeaf(leaf) {
+  const id = leaf.dataset.id;
+  const summaryEl = leaf.querySelector(".bm-leaf-summary");
+  const contentEl = leaf.querySelector(".bm-leaf-content");
+  const actionsEl = leaf.querySelector(".bm-leaf-actions");
+  if (leaf.querySelector(".edit-form")) return;
+  actionsEl.innerHTML = `
+    <button class="btn-sm btn-save" onclick="event.stopPropagation();bmSaveLeaf(this.closest('.bm-leaf'))">Save</button>
+    <button class="btn-sm btn-cancel" onclick="event.stopPropagation();bmCancelLeafEdit(this.closest('.bm-leaf'))">Cancel</button>
+  `;
+  const form = document.createElement("div");
+  form.className = "edit-form";
+  form.innerHTML = `
+    <label>Summary</label>
+    <input type="text" name="summary" value="${escAttr(summaryEl.textContent)}" onclick="event.stopPropagation()">
+    <label>Content</label>
+    <textarea name="content" onclick="event.stopPropagation()">${escHtml(contentEl.textContent)}</textarea>
+  `;
+  actionsEl.before(form);
+  summaryEl.style.display = "none";
+  contentEl.style.display = "none";
+}
+
+function bmCancelLeafEdit(leaf) {
+  const form = leaf.querySelector(".edit-form");
+  if (form) form.remove();
+  leaf.querySelector(".bm-leaf-summary").style.display = "";
+  leaf.querySelector(".bm-leaf-content").style.display = "";
+  leaf.querySelector(".bm-leaf-actions").innerHTML = `
+    <button class="btn-sm btn-edit" onclick="event.stopPropagation();bmEditLeaf(this.closest('.bm-leaf'))">Edit</button>
+    <button class="btn-sm btn-delete" onclick="event.stopPropagation();bmDeleteLeaf(this.closest('.bm-leaf'))">Delete</button>
+  `;
+}
+
+async function bmSaveLeaf(leaf) {
+  const id = leaf.dataset.id;
+  const form = leaf.querySelector(".edit-form");
+  const summary = form.querySelector('[name="summary"]').value.trim();
+  const content = form.querySelector('[name="content"]').value.trim();
+  try {
+    await api("update", {}, { method: "PUT", body: { id, content, summary } });
+    form.remove();
+    leaf.querySelector(".bm-leaf-summary").textContent = summary;
+    leaf.querySelector(".bm-leaf-summary").style.display = "";
+    leaf.querySelector(".bm-leaf-content").textContent = content;
+    leaf.querySelector(".bm-leaf-content").style.display = "";
+    leaf.querySelector(".bm-leaf-actions").innerHTML = `
+      <button class="btn-sm btn-edit" onclick="event.stopPropagation();bmEditLeaf(this.closest('.bm-leaf'))">Edit</button>
+      <button class="btn-sm btn-delete" onclick="event.stopPropagation();bmDeleteLeaf(this.closest('.bm-leaf'))">Delete</button>
+    `;
+  } catch (err) { alert("Save failed: " + err.message); }
+}
+
+function bmRenderSubgroup(name, memories, collapsed) {
+  return `<div class="bm-subgroup${collapsed ? " collapsed" : ""}">
+    <div class="bm-subgroup-header" onclick="bmToggleSubgroup(this)">
+      <span class="bm-subgroup-arrow">▼</span>
+      ${escHtml(name)}
+      <span class="bm-subgroup-count">${memories.length}</span>
+    </div>
+    <div class="bm-subgroup-items">${memories.map(bmRenderLeaf).join("")}</div>
+  </div>`;
+}
+
+function bmRenderChildrenPanel(id, title, contentHtml, color) {
+  return `<div class="bm-children-panel" id="${id}">
+    <div class="bm-children-inner" style="border-color:${color}33;">
+      <div class="bm-children-title" style="color:${color};">
+        ${escHtml(title)}
+        <button class="close-btn" onclick="bmToggleNode('${id}', document.querySelector('[data-panel=${id}]'))">Close</button>
+      </div>
+      ${contentHtml}
+    </div>
+  </div>`;
+}
+
+function bmNode(emoji, label, color, count, panelId, tooltip) {
+  return `<div class="bm-node" data-panel="${panelId}" onclick="bmToggleNode('${panelId}', this)">
+    <div class="bm-tooltip">${escHtml(tooltip)}</div>
+    <div class="bm-node-circle" style="background:${color}22;border-color:${color}55;">
+      ${emoji}
+      ${count > 0 ? `<span class="bm-node-badge" style="background:${color};">${count}</span>` : ""}
+    </div>
+    <div class="bm-node-label">${escHtml(label)}</div>
+  </div>`;
+}
+
+const PROJECT_GROUPS = [
+  { name: "Session Checkpoints", test: s => /session\s*#?\d+/i.test(s) },
+  { name: "Agent Portal", test: s => /agent\s*portal/i.test(s) },
+  { name: "Batch Progress", test: s => /batch/i.test(s) },
+  { name: "Business Milestones", test: s => /patent|NAB|google\s*startups|roadmap|twelve\s*labs.*call|jeff\s*lewis|credits.*plan/i.test(s) },
+];
+const TECH_GROUPS = [
+  { name: "Rules & Gotchas", test: s => /rule:|gotcha|must\s*follow|never\s*skip|burned\s*\d+|batch\s*safety/i.test(s) },
+  { name: "Match-Project / ICE", test: s => /match-project|anchoring|funnel|signal\s*independence|ground\s*truth|score\s*floor|concept\s*search/i.test(s) },
+  { name: "TL / Video Pipeline", test: s => /twelve\s*labs|TL\s|embed-v2|mux|video\s*search|orphan|marengo/i.test(s) },
+  { name: "Integrations / API", test: s => /composio|gmail|API\s*key|setup\s*complete|auth\s*config/i.test(s) },
+  { name: "Gemini / Embeddings", test: s => /gemini|embedding|audit.*roadmap|debate.*session/i.test(s) },
+];
+
+function subGroup(memories, groups) {
+  const result = {};
+  const other = [];
+  for (const g of groups) result[g.name] = [];
+  for (const m of memories) {
+    const s = (m.summary || "") + " " + (m.content || "").slice(0, 200);
+    let matched = false;
+    for (const g of groups) { if (g.test(s)) { result[g.name].push(m); matched = true; break; } }
+    if (!matched) other.push(m);
+  }
+  if (other.length) result["Other"] = other;
+  for (const k in result) { if (!result[k].length) delete result[k]; }
+  return result;
+}
+
+function bmDrawLines() {
+  const svg = document.getElementById("bm-svg");
+  if (!svg) return;
+  const container = document.getElementById("brain-tree");
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  svg.setAttribute("width", rect.width);
+  svg.setAttribute("height", rect.height);
+  svg.style.width = rect.width + "px";
+  svg.style.height = rect.height + "px";
+  let paths = "";
+  const root = document.getElementById("bm-root-circle");
+  if (!root) return;
+  const rootRect = root.getBoundingClientRect();
+  const rootX = rootRect.left + rootRect.width / 2 - rect.left;
+  const rootY = rootRect.top + rootRect.height - rect.top;
+  document.querySelectorAll(".bm-tier .bm-node-circle").forEach(circle => {
+    const cr = circle.getBoundingClientRect();
+    const cx = cr.left + cr.width / 2 - rect.left;
+    const cy = cr.top - rect.top;
+    const midY = rootY + (cy - rootY) * 0.5;
+    paths += `<path d="M${rootX},${rootY} C${rootX},${midY} ${cx},${midY} ${cx},${cy}" />`;
+  });
+  svg.innerHTML = paths;
+}
+
+async function loadTree() {
+  const tree = document.getElementById("brain-tree");
+  try {
+    const data = await api("recent", { limit: 500 });
+    const all = data.memories || data || [];
+    treeLoaded = true;
+    document.getElementById("bm-total").textContent = all.length;
+    document.getElementById("header-stats").textContent = `${all.length} memories`;
+
+    const catCounts = {};
+    for (const m of all) { const c = m.category || "general"; catCounts[c] = (catCounts[c] || 0) + 1; }
+    document.getElementById("bm-dots").innerHTML = Object.entries(catCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([cat, count]) => `<span class="bm-dot-legend"><span class="dot" style="background:${CAT_COLORS[cat] || "#8888a0"}"></span>${cat} ${count}</span>`)
+      .join("");
+
+    const memFiles = all.filter(m => m.category === "memory-file");
+    const regular = all.filter(m => m.category !== "memory-file");
+    allMemories = all;
+
+    const p1Files = memFiles.filter(f => (f.metadata?.load_priority || 5) === 1);
+    const p2Files = memFiles.filter(f => (f.metadata?.load_priority || 5) === 2);
+    const p3Files = memFiles.filter(f => (f.metadata?.load_priority || 5) === 3);
+    const p4Files = memFiles.filter(f => (f.metadata?.load_priority || 5) === 4);
+
+    const byCat = {};
+    for (const m of regular) { const c = m.category || "general"; if (!byCat[c]) byCat[c] = []; byCat[c].push(m); }
+
+    let html = `<div class="brain-map-container">
+      <svg class="bm-connectors" id="bm-svg"></svg>
+      <div class="brain-map-content">`;
+
+    // ROOT
+    html += `<div class="bm-root">
+      <div class="bm-root-circle" id="bm-root-circle">🧠</div>
+      <div class="bm-root-label">Your Brain</div>
+    </div>`;
+
+    // TIER 1: ALWAYS LOAD
+    const tier1Rules = p1Files.map(f => bmRenderLeaf({ ...f, summary: f.metadata?.name || f.summary })).join("");
+    const recentMems = regular.slice(0, 5);
+    const tier1Recent = recentMems.map(bmRenderLeaf).join("");
+
+    html += `<div class="bm-tier-sep"></div>`;
+    html += `<div class="bm-tier">
+      <div class="bm-tier-label">Always Load</div>
+      <div class="bm-tier-nodes">
+        ${bmNode("🔴", "Rules & Guardrails", "#e17055", p1Files.length, "panel-rules", "P1: Read every session before any work")}
+        ${bmNode("⏰", "Recent Context", "#fdcb6e", recentMems.length, "panel-recent", "Last session checkpoint, what's running")}
+      </div>
+    </div>`;
+    html += bmRenderChildrenPanel("panel-rules", "Rules & Guardrails (P1 - Always Load)", tier1Rules, "#e17055");
+    html += bmRenderChildrenPanel("panel-recent", "Recent Context (Last 5 Memories)", tier1Recent, "#fdcb6e");
+
+    // TIER 2: TABLE OF CONTENTS
+    const p2Content = p2Files.map(f => bmRenderLeaf({ ...f, summary: f.metadata?.name || f.summary })).join("");
+    const p3Content = p3Files.map(f => bmRenderLeaf({ ...f, summary: f.metadata?.name || f.summary })).join("");
+    const p4Content = p4Files.map(f => bmRenderLeaf({ ...f, summary: f.metadata?.name || f.summary })).join("");
+
+    html += `<div class="bm-tier-sep"></div>`;
+    html += `<div class="bm-tier">
+      <div class="bm-tier-label">Table of Contents</div>
+      <div class="bm-tier-nodes">
+        ${bmNode("📘", "Reference (P2)", "#74b9ff", p2Files.length, "panel-p2", "Tech stack, pipeline, workflow, business, gmail")}
+        ${bmNode("📙", "Runbooks (P3)", "#fdcb6e", p3Files.length, "panel-p3", "Roadmap, match pipeline, ICE, learning loop, audits")}
+        ${bmNode("📗", "Integrations (P4)", "#00b894", p4Files.length, "panel-p4", "Composio, analytics, TL agent")}
+      </div>
+    </div>`;
+    html += bmRenderChildrenPanel("panel-p2", "Reference (P2 - Read When Relevant)", p2Content, "#74b9ff");
+    html += bmRenderChildrenPanel("panel-p3", "Runbooks & Specs (P3 - Read Before Touching)", p3Content, "#fdcb6e");
+    html += bmRenderChildrenPanel("panel-p4", "Integrations (P4 - Read When Relevant)", p4Content, "#00b894");
+
+    // TIER 3: ON-DEMAND
+    const catOrder = ["project", "technical", "wfs", "personal", "contact", "general"];
+    const catLabels = { project: "Project", technical: "Technical", wfs: "WFS", personal: "Personal", contact: "Contact", general: "General" };
+    const catGroupDefs = { project: PROJECT_GROUPS, technical: TECH_GROUPS };
+
+    let tier3Nodes = "";
+    let tier3Panels = "";
+    for (const cat of catOrder) {
+      if (!byCat[cat] || !byCat[cat].length) continue;
+      const mems = byCat[cat];
+      const color = CAT_COLORS[cat] || "#8888a0";
+      const emoji = CAT_EMOJI[cat] || "⚪";
+      const panelId = `panel-cat-${cat}`;
+      const label = catLabels[cat] || cat.toUpperCase();
+      tier3Nodes += bmNode(emoji, label, color, mems.length, panelId, `${mems.length} ${cat} memories`);
+      let panelContent = "";
+      if (catGroupDefs[cat]) {
+        const groups = subGroup(mems, catGroupDefs[cat]);
+        panelContent = Object.entries(groups).map(([name, items]) => bmRenderSubgroup(name, items, true)).join("");
+      } else {
+        panelContent = mems.map(bmRenderLeaf).join("");
+      }
+      tier3Panels += bmRenderChildrenPanel(panelId, `${label} Memories`, panelContent, color);
+    }
+
+    html += `<div class="bm-tier-sep"></div>`;
+    html += `<div class="bm-tier">
+      <div class="bm-tier-label">On-Demand</div>
+      <div class="bm-tier-nodes">${tier3Nodes}</div>
+    </div>`;
+    html += tier3Panels;
+    html += `</div></div>`;
+    tree.innerHTML = html;
+    requestAnimationFrame(() => { bmDrawLines(); });
+    window.addEventListener("resize", bmDrawLines);
+  } catch (err) {
+    tree.innerHTML = `<div class="empty">Error loading brain map: ${escHtml(err.message)}</div>`;
+  }
+}
+
+async function initDashboard() {
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  try { await loadTree(); } catch (e) { console.error(e); }
+}
+</script>
+</body>
+</html>

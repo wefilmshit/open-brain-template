@@ -1,0 +1,35 @@
+name: Decay Audit
+
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run decay audit
+        env:
+          MEMORY_MCP_URL: ${{ secrets.MEMORY_MCP_URL }}
+          MEMORY_MCP_TOKEN: ${{ secrets.MEMORY_MCP_TOKEN }}
+        run: node audit/decay-audit.js
+
+      # NOTE (2026-05-29 pre-publish hardening): the original step auto-committed
+      # audit/results/ back to the repo on every run, which would auto-leak each adopter's
+      # own recall responses into their git history. Replaced with an artifact upload — the
+      # snapshot is a downloadable run artifact, never committed to the repo.
+      - name: Upload decay snapshot (artifact, not committed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: decay-audit-results
+          path: audit/results/
+          if-no-files-found: ignore

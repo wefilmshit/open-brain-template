@@ -1,0 +1,26 @@
+[
+  {
+    "query": "what command do we use to deploy our serverless functions",
+    "hint": "concrete operational recall; should cite a specific deploy-command memory"
+  },
+  {
+    "query": "what are the core rules for how the assistant should work with me",
+    "hint": "top-priority working-style rules; should cite multiple rule memories"
+  },
+  {
+    "query": "what is the troubleshooting playbook when something breaks",
+    "hint": "should cite the troubleshooting playbook memory"
+  },
+  {
+    "query": "what are the main project guardrails and constraints",
+    "hint": "should cite the project guardrails memory"
+  },
+  {
+    "query": "what recurring technical gotchas keep getting repeated",
+    "hint": "should cite the gotchas memory"
+  },
+  {
+    "query": "how does the memory agent work and what identifier does it use",
+    "hint": "should cite a recent architecture memory"
+  }
+]
