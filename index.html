@@ -122,7 +122,7 @@
   .cat-project { background: #6c5ce722; color: var(--accent2); }
   .cat-technical { background: #74b9ff22; color: var(--blue); }
   .cat-personal { background: #00b89422; color: var(--green); }
-  .cat-wfs { background: #fdcb6e22; color: var(--orange); }
+  .cat-work { background: #fdcb6e22; color: var(--orange); }
   .cat-contact { background: #e1705522; color: var(--red); }
   .cat-director { background: #fd79a822; color: var(--pink); }
   .cat-memory-file { background: #a29bfe22; color: var(--accent2); }
@@ -1170,11 +1170,11 @@ function renderAgentCommRow(memory) {
 
 const CAT_COLORS = {
   project: "#a29bfe", technical: "#74b9ff", personal: "#00b894",
-  wfs: "#fdcb6e", contact: "#e17055", general: "#8888a0", "memory-file": "#a29bfe"
+  work: "#fdcb6e", contact: "#e17055", general: "#8888a0", "memory-file": "#a29bfe"
 };
 const CAT_EMOJI = {
   project: "🟣", technical: "🔵", personal: "🟢",
-  wfs: "🟠", contact: "🔴", general: "⚪"
+  work: "🟠", contact: "🔴", general: "⚪"
 };
 
 let bmOpenPanel = null;
@@ -1454,8 +1454,8 @@ async function loadTree() {
     html += bmRenderChildrenPanel("panel-p4", "Integrations (P4 - Read When Relevant)", p4Content, "#00b894");
 
     // TIER 3: ON-DEMAND
-    const catOrder = ["project", "technical", "wfs", "personal", "contact", "general"];
-    const catLabels = { project: "Project", technical: "Technical", wfs: "WFS", personal: "Personal", contact: "Contact", general: "General" };
+    const catOrder = ["project", "technical", "work", "personal", "contact", "general"];
+    const catLabels = { project: "Project", technical: "Technical", work: "Work", personal: "Personal", contact: "Contact", general: "General" };
     const catGroupDefs = { project: PROJECT_GROUPS, technical: TECH_GROUPS };
 
     let tier3Nodes = "";
