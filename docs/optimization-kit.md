@@ -101,6 +101,8 @@ Bad wording:
 
 A stale board row usually means missing evidence, stale cursor metadata, or an unmapped worktree. It does not automatically mean the product is broken.
 
+In this guide, a plan cursor is the plan's current status block, a closeout artifact is a saved proof note, and a board collector is the script or job that turns those proofs into dashboard rows.
+
 Diagnose in order:
 
 1. Read the plan cursor.
