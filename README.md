@@ -32,6 +32,8 @@ And even when you have a memory bank wired up, raw semantic recall returns noise
 
 **(New, late April 2026) Recall quality upgrades.** Five features underneath Memory Steward that raise the ceiling on what raw recall returns: hybrid search (vector + BM25 + recency), retrieval miss tracking with classified failure reasons, aggregate queries on bank shape, audit-preserving memory corrections, and directed knowledge-graph edges between memories. See [docs/recall-quality.md](docs/recall-quality.md). Inspired in part by Peter Simmons' [engram-go](https://github.com/petersimmons1972/engram-go).
 
+**Optimization Kit.** Scripts, prompts, templates, smoke checks, and playbooks for improving an Open Brain without mixing up speed, quality, shadow builds, and production. See [docs/optimization-kit.md](docs/optimization-kit.md).
+
 ## Screenshots
 
 ### Brain Map — Visual Memory Hierarchy
@@ -211,6 +213,7 @@ The Memory Steward path is optional — the older direct `recall` / `remember` p
 ### See [docs/](docs/) for setup recipes:
 - [docs/memory-steward.md](docs/memory-steward.md) — create the Managed Agent + stand up the orchestrator
 - [docs/session-start-hook.md](docs/session-start-hook.md) — auto-load hook script + Claude Code settings.json snippet
+- [docs/optimization-kit.md](docs/optimization-kit.md) — smoke checks, evals, prompts, templates, and public playbooks for safe optimization
 
 ## Contributing
 PRs welcome. If you build something cool on top of this, open a PR or issue.
