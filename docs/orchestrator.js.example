@@ -12,8 +12,8 @@
 // compatibility with current consumers (Claude Desktop, ChatGPT) until they
 // migrate to the new memory_query tool exposed by the Phase D MCP bridge.
 //
-// Reference pattern: trigger-workers/src/trigger/ep-brain-managed-agent.ts in
-// the Adopt A Director repo (production, has been running EP Brain since Mar 2026).
+// Reference pattern: a production managed-agent service that already handles
+// SSE event streams and custom tool-result acknowledgements.
 // Same SSE event types, same custom_tool_use / user.custom_tool_result protocol,
 // same session lifecycle. Copied carefully — including the unknown-event-id ack
 // safeguard that prevents the "waiting on responses to events" failure mode.
