@@ -76,7 +76,21 @@ const timestamp = new Date().toISOString();
 const results = [];
 
 for (const item of queries) {
-  results.push(stewardUrl ? await runStewardQuery(item) : await runRawSearch(item));
+  const started = Date.now();
+  try {
+    results.push(stewardUrl ? await runStewardQuery(item) : await runRawSearch(item));
+  } catch (error) {
+    results.push({
+      query: item.query,
+      hint: item.hint || null,
+      ok: false,
+      status: null,
+      duration_ms: Date.now() - started,
+      memory_ids: [],
+      count: 0,
+      error: error?.message || String(error),
+    });
+  }
 }
 
 fs.mkdirSync(outputDir, { recursive: true });

@@ -103,6 +103,9 @@
     background: var(--accent); color: white; border: none; padding: 10px 20px;
     border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem;
   }
+  .search-boundary-copy {
+    margin: -12px 0 20px; font-size: 0.72rem; color: var(--text2); line-height: 1.4;
+  }
 
   /* Memory list */
   .memory-list { display: flex; flex-direction: column; gap: 10px; }
@@ -491,10 +494,11 @@
     <div class="tab-content active" id="tab-tree">
       <!-- Search bar on Brain Map -->
       <div class="search-bar">
-        <input type="text" id="bm-search-input" placeholder="Search all memories..." onkeydown="if(event.key==='Enter')bmSearch()">
+        <input type="text" id="bm-search-input" placeholder="Keyword search recent memories..." aria-describedby="bm-search-help" onkeydown="if(event.key==='Enter')bmSearch()">
         <button onclick="bmSearch()">Search</button>
         <button onclick="bmClearSearch()" style="background: var(--surface2); color: var(--text2);">Clear</button>
       </div>
+      <p class="search-boundary-copy" id="bm-search-help">Searches recent-memory keywords; semantic recall remains in agent memory.</p>
       <!-- Search results -->
       <div class="bm-search-results" id="bm-search-results">
         <div class="bm-search-results-header">
