@@ -34,6 +34,8 @@ And even when you have a memory bank wired up, raw semantic recall returns noise
 
 **Optimization Kit.** Scripts, prompts, templates, smoke checks, and playbooks for improving an Open Brain without mixing up speed, quality, shadow builds, and production. See [docs/optimization-kit.md](docs/optimization-kit.md).
 
+**Memory File Sync Kit.** Optional scripts for keeping local markdown memory files aligned with Open Brain `memory-file` rows. No scheduler is auto-enabled; use it only if you want file-based memory editing. See [docs/memory-file-sync.md](docs/memory-file-sync.md).
+
 ## Screenshots
 
 ### Brain Map - Visual Memory Hierarchy
@@ -135,6 +137,7 @@ The hook script template lives at [docs/session-start-hook.md](docs/session-star
 5. Deploy to [Vercel](https://vercel.com)
 6. (Optional) Add the SessionStart hook for auto-loading
 7. (Optional, requires Anthropic API key with Managed Agents access) Stand up Memory Steward via [docs/memory-steward.md](docs/memory-steward.md)
+8. (Optional, advanced) Sync local markdown memory files with Open Brain rows via [docs/memory-file-sync.md](docs/memory-file-sync.md)
 
 Full setup instructions in [CLAUDE.md](CLAUDE.md) (readable by both humans and AI agents).
 
@@ -214,6 +217,7 @@ The Memory Steward path is optional — the older direct `recall` / `remember` p
 - [docs/memory-steward.md](docs/memory-steward.md) — create the Managed Agent + stand up the orchestrator
 - [docs/session-start-hook.md](docs/session-start-hook.md) — auto-load hook script + Claude Code settings.json snippet
 - [docs/optimization-kit.md](docs/optimization-kit.md) — smoke checks, evals, prompts, templates, and public playbooks for safe optimization
+- [docs/memory-file-sync.md](docs/memory-file-sync.md) — optional markdown file sync scripts for `memory-file` rows
 
 ## Contributing
 PRs welcome. If you build something cool on top of this, open a PR or issue.
