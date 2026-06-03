@@ -1,12 +1,14 @@
-# Open Brain - AI Memory Dashboard and Optimization Kit
+# Open Brain - Open-Source AI Agent Memory Dashboard for Claude, ChatGPT, Cursor, MCP, Supabase, and pgvector
 
-**Persistent memory, semantic recall, and safe optimization tooling for AI agents.**
+**Persistent AI agent memory with an MCP-compatible dashboard, Supabase pgvector recall, Mem0 support, an Optimization Kit, and a Memory File Sync Kit.**
 
-Open Brain is an open-source AI memory dashboard for managing what your agents know, when they load it, and how they prioritize context. It gives Claude, ChatGPT, Cursor, and other MCP-compatible tools one persistent memory bank with visual editing, semantic recall, and repeatable optimization checks.
+Open Brain is an MIT-licensed template for managing what your AI agents know, when they load it, and how they prioritize context. It gives Claude Code, Claude Desktop, ChatGPT, Cursor, and other MCP-compatible tools one persistent memory bank with visual editing, agent recall, and repeatable optimization checks.
 
-Works with Claude Code, Claude Desktop, ChatGPT, Cursor, or any MCP-compatible AI tool. Pairs with [Mem0](https://mem0.ai) for intelligent memory compression and deduplication. As of April 2026, includes an optional **Memory Steward** smart-query layer powered by Anthropic Managed Agents.
+Works with Claude Code, Claude Desktop, ChatGPT, Cursor, or any MCP-compatible AI tool. Pairs with [Mem0](https://mem0.ai) for intelligent memory compression and deduplication. Includes optional Memory Steward docs for a smart-query layer that can reformulate, re-rank, deduplicate, and cite memory results.
 
-![Brain Map](https://img.shields.io/badge/memories-343-purple) ![Auth](https://img.shields.io/badge/auth-Google_OAuth-blue) ![Deploy](https://img.shields.io/badge/deploy-Vercel-black) ![MCP](https://img.shields.io/badge/protocol-MCP-green) ![Steward](https://img.shields.io/badge/smart_layer-Memory_Steward-orange)
+![AI Memory](https://img.shields.io/badge/AI_agent-memory-purple) ![MCP](https://img.shields.io/badge/protocol-MCP-green) ![Supabase](https://img.shields.io/badge/database-Supabase-blue) ![pgvector](https://img.shields.io/badge/recall-pgvector-teal) ![License](https://img.shields.io/badge/license-MIT-black)
+
+New to AI memory systems? Start with [Give This Repo to Your AI](docs/give-this-to-your-ai.md). It is a plain-English setup brief you can paste into Claude, ChatGPT, or Cursor so your assistant can read the repo with the right boundaries.
 
 ## The Problem
 
@@ -22,21 +24,23 @@ And even when you have a memory bank wired up, raw semantic recall returns noise
 
 **Agent comms view.** Track prompt/response artifacts saved by multiple agents as lightweight pointer memories tagged `agent-artifact`, with from/to/topic/date/priority columns and click-throughs to the source file path.
 
-**Semantic search.** Find any memory by meaning, not keywords. Powered by pgvector embeddings.
+**Agent semantic recall.** Let your AI retrieve memory by meaning through the memory API and pgvector embeddings. The dashboard search is intentionally labeled as keyword search unless you wire and prove semantic dashboard search separately.
 
 **Works across tools.** One memory bank, any AI tool. Claude Code at work, ChatGPT on your phone, Cursor in your IDE — they all read from the same brain.
 
-**(New, April 2026) Smart query layer via Memory Steward.** A dedicated Anthropic Managed Agent sits in front of your raw memory and does the work raw recall doesn't: reformulates queries for better embedding matches, runs multiple parallel searches, re-ranks results by actual usefulness (not raw similarity), filters out duplicates and stale entries, and synthesizes one good answer with cited memory IDs. Slower than raw recall (10-40s) but dramatically more relevant.
+**Optional smart query layer via Memory Steward.** A dedicated memory steward can sit in front of raw recall and do the work raw recall does not: reformulate queries for better embedding matches, run multiple parallel searches, re-rank results by actual usefulness, filter duplicates and stale entries, and synthesize one good answer with cited memory IDs. Slower than raw recall, but designed for higher relevance.
 
 **(New) Auto-load at session start.** A single SessionStart hook script reads your N most recent memories at the beginning of every Claude Code session and injects them as context, so the AI literally starts the conversation already knowing what happened yesterday.
 
-**(New, late April 2026) Recall quality upgrades.** Five features underneath Memory Steward that raise the ceiling on what raw recall returns: hybrid search (vector + BM25 + recency), retrieval miss tracking with classified failure reasons, aggregate queries on bank shape, audit-preserving memory corrections, and directed knowledge-graph edges between memories. See [docs/recall-quality.md](docs/recall-quality.md). Inspired in part by Peter Simmons' [engram-go](https://github.com/petersimmons1972/engram-go).
+**Recall quality upgrades.** Five features underneath Memory Steward that raise the ceiling on what raw recall returns: hybrid search (vector + BM25 + recency), retrieval miss tracking with classified failure reasons, aggregate queries on bank shape, audit-preserving memory corrections, and directed knowledge-graph edges between memories. See [docs/recall-quality.md](docs/recall-quality.md). Inspired in part by Peter Simmons' [engram-go](https://github.com/petersimmons1972/engram-go).
 
 **Optimization Kit.** Scripts, prompts, templates, smoke checks, and playbooks for improving an Open Brain without mixing up speed, quality, shadow builds, and production. See [docs/optimization-kit.md](docs/optimization-kit.md).
 
 **Memory File Sync Kit.** Optional scripts for keeping local markdown memory files aligned with Open Brain `memory-file` rows. No scheduler is auto-enabled; use it only if you want file-based memory editing. See [docs/memory-file-sync.md](docs/memory-file-sync.md).
 
 ## Screenshots
+
+These are sanitized template screenshots, not a private production memory bank.
 
 ### Brain Map - Visual Memory Hierarchy
 ![Open Brain dashboard showing a sanitized visual memory hierarchy](brain-map.png)
@@ -56,8 +60,8 @@ And even when you have a memory bank wired up, raw semantic recall returns noise
 | | Notes/Docs | Open Brain |
 |---|---|---|
 | Priority loading | No | P1-P4 system |
-| Semantic search | No | pgvector embeddings |
-| Smart query (re-rank, dedup) | No | Memory Steward Managed Agent |
+| Agent semantic recall | No | pgvector embeddings |
+| Smart query (re-rank, dedup) | No | Memory Steward smart-query layer |
 | Agent-readable | Copy-paste | MCP protocol (native) |
 | Session boot sequence | Manual | Automatic checklist |
 | Auto-load on session start | No | SessionStart hook |
@@ -92,8 +96,8 @@ Long AI sessions cause context drift — the agent "forgets" rules loaded at the
 - **Better relevance ranking** — 0.9 similarity scores vs. 0.5 with raw pgvector
 - Supabase stays your source of truth. Mem0 makes search smarter.
 
-### Memory Steward Smart Query (New, April 2026)
-Raw semantic recall is fast but returns noise. Memory Steward is a dedicated Anthropic Managed Agent that wraps the raw recall in intelligence:
+### Memory Steward Smart Query
+Raw semantic recall is fast but can return noise. Memory Steward is an optional smart-query layer that wraps raw recall in intelligence:
 
 - **Query reformulation** — your "deploy command" becomes "deploy procedure for production frontend including the dangerous CLI to never use"
 - **Parallel multi-search** — runs 3-5 different phrasings in parallel, gathers all candidates
@@ -105,7 +109,7 @@ It exposes as a single MCP tool (`memory_query`) alongside the existing 5. Use r
 
 Setup recipe in [docs/memory-steward.md](docs/memory-steward.md).
 
-### SessionStart Auto-Load Hook (New, April 2026)
+### SessionStart Auto-Load Hook
 Add this single hook to your `~/.claude/settings.json` and Claude Code will automatically inject your last N memories as context at the start of every session — no manual `recall` needed at the top of each conversation:
 
 ```json
@@ -136,10 +140,10 @@ The hook script template lives at [docs/session-start-hook.md](docs/session-star
 4. Add your email to `ALLOWED_EMAILS`
 5. Deploy to [Vercel](https://vercel.com)
 6. (Optional) Add the SessionStart hook for auto-loading
-7. (Optional, requires Anthropic API key with Managed Agents access) Stand up Memory Steward via [docs/memory-steward.md](docs/memory-steward.md)
+7. (Optional, advanced) Stand up Memory Steward via [docs/memory-steward.md](docs/memory-steward.md)
 8. (Optional, advanced) Sync local markdown memory files with Open Brain rows via [docs/memory-file-sync.md](docs/memory-file-sync.md)
 
-Full setup instructions in [CLAUDE.md](CLAUDE.md) (readable by both humans and AI agents).
+Full setup instructions are in [CLAUDE.md](CLAUDE.md). If you want your assistant to help with setup, start with [docs/give-this-to-your-ai.md](docs/give-this-to-your-ai.md).
 
 ## Stack
 - **Frontend:** Vanilla HTML/CSS/JS (no build step, single file)
@@ -148,7 +152,7 @@ Full setup instructions in [CLAUDE.md](CLAUDE.md) (readable by both humans and A
 - **Hosting:** Vercel
 - **Memory Protocol:** MCP (Model Context Protocol)
 - **Smart Layer (recommended):** Mem0 for compression, dedup, and ranking
-- **Smart Query (optional, new):** Anthropic Managed Agent (Memory Steward)
+- **Smart Query (optional, advanced):** Memory Steward smart-query layer
 
 ## How Your AI Agent Uses This
 
@@ -214,6 +218,7 @@ The Memory Steward path is optional — the older direct `recall` / `remember` p
 - Designed for artifact-pointer workflows where agents save durable prompt/response files and store only small Open Brain pointer memories
 
 ### See [docs/](docs/) for setup recipes:
+- [docs/give-this-to-your-ai.md](docs/give-this-to-your-ai.md) — pasteable setup brief for Claude, ChatGPT, Cursor, or another AI assistant
 - [docs/memory-steward.md](docs/memory-steward.md) — create the Managed Agent + stand up the orchestrator
 - [docs/session-start-hook.md](docs/session-start-hook.md) — auto-load hook script + Claude Code settings.json snippet
 - [docs/optimization-kit.md](docs/optimization-kit.md) — smoke checks, evals, prompts, templates, and public playbooks for safe optimization
