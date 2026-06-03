@@ -110,7 +110,7 @@ export function buildMemoryPayload(fileName, raw, priorityMap = {}) {
   const { meta, body } = parseFrontmatter(raw);
   const mapped = priorityMap[fileName];
   const mappedPriority = typeof mapped === "object" ? mapped.priority : mapped;
-  const priority = Number(meta.priority ?? mappedPriority ?? (fileName === "MEMORY.md" ? 0 : 3));
+  const priority = parsePriority(meta.priority ?? mappedPriority ?? (fileName === "MEMORY.md" ? 0 : 3), fileName);
   const type = meta.type || (fileName === "MEMORY.md" ? "index" : "memory-file");
   const name = meta.name || (fileName === "MEMORY.md" ? "MEMORY.md master index" : fileName.replace(/\.md$/, ""));
   const description = meta.description || "";
@@ -128,6 +128,14 @@ export function buildMemoryPayload(fileName, raw, priorityMap = {}) {
       synced_at: new Date().toISOString(),
     },
   };
+}
+
+function parsePriority(value, fileName) {
+  const priority = Number(value);
+  if (!Number.isFinite(priority)) {
+    throw new Error(`invalid_priority: ${fileName} has non-numeric priority ${JSON.stringify(value)}`);
+  }
+  return priority;
 }
 
 export function frontmatterForRow(row) {
