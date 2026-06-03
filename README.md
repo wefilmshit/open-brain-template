@@ -1,8 +1,8 @@
-# Open Brain
+# Open Brain - AI Memory Dashboard and Optimization Kit
 
-**Stop your AI from forgetting your rules.**
+**Persistent memory, semantic recall, and safe optimization tooling for AI agents.**
 
-Open Brain is a visual dashboard for managing what your AI knows, when it loads it, and how it prioritizes context. Built for people who work with AI agents every day and need persistent, structured memory that works across tools.
+Open Brain is an open-source AI memory dashboard for managing what your agents know, when they load it, and how they prioritize context. It gives Claude, ChatGPT, Cursor, and other MCP-compatible tools one persistent memory bank with visual editing, semantic recall, and repeatable optimization checks.
 
 Works with Claude Code, Claude Desktop, ChatGPT, Cursor, or any MCP-compatible AI tool. Pairs with [Mem0](https://mem0.ai) for intelligent memory compression and deduplication. As of April 2026, includes an optional **Memory Steward** smart-query layer powered by Anthropic Managed Agents.
 
@@ -36,11 +36,11 @@ And even when you have a memory bank wired up, raw semantic recall returns noise
 
 ## Screenshots
 
-### Brain Map — Visual Memory Hierarchy
-![Brain Map](brain-map.png)
+### Brain Map - Visual Memory Hierarchy
+![Open Brain dashboard showing a sanitized visual memory hierarchy](brain-map.png)
 
-### Editor — Priority-Based Memory Files
-![Editor](editor.png)
+### Editor - Priority-Based Memory Files
+![Open Brain editor showing sanitized priority-based memory files](editor.png)
 
 ## Who This Is For
 

@@ -1338,9 +1338,9 @@ const PROJECT_GROUPS = [
 ];
 const TECH_GROUPS = [
   { name: "Rules & Gotchas", test: s => /rule:|gotcha|must\s*follow|never\s*skip|burned\s*\d+|batch\s*safety/i.test(s) },
-  { name: "Match-Project / ICE", test: s => /match-project|anchoring|funnel|signal\s*independence|ground\s*truth|score\s*floor|concept\s*search/i.test(s) },
+  { name: "Project Matching / Learning", test: s => /match-project|anchoring|funnel|signal\s*independence|ground\s*truth|score\s*floor|concept\s*search/i.test(s) },
   { name: "TL / Video Pipeline", test: s => /twelve\s*labs|TL\s|embed-v2|mux|video\s*search|orphan|marengo/i.test(s) },
-  { name: "Integrations / API", test: s => /composio|gmail|API\s*key|setup\s*complete|auth\s*config/i.test(s) },
+  { name: "Integrations / API", test: s => /provider|integration|gmail|API\s*key|setup\s*complete|auth\s*config/i.test(s) },
   { name: "Gemini / Embeddings", test: s => /gemini|embedding|audit.*roadmap|debate.*session/i.test(s) },
 ];
 
@@ -1449,8 +1449,8 @@ async function loadTree() {
       <div class="bm-tier-label">Table of Contents</div>
       <div class="bm-tier-nodes">
         ${bmNode("📘", "Reference (P2)", "#74b9ff", p2Files.length, "panel-p2", "Tech stack, pipeline, workflow, business, gmail")}
-        ${bmNode("📙", "Runbooks (P3)", "#fdcb6e", p3Files.length, "panel-p3", "Roadmap, match pipeline, ICE, learning loop, audits")}
-        ${bmNode("📗", "Integrations (P4)", "#00b894", p4Files.length, "panel-p4", "Composio, analytics, TL agent")}
+        ${bmNode("📙", "Runbooks (P3)", "#fdcb6e", p3Files.length, "panel-p3", "Roadmap, matching, learning loop, audits")}
+        ${bmNode("📗", "Integrations (P4)", "#00b894", p4Files.length, "panel-p4", "API keys, analytics, provider setup")}
       </div>
     </div>`;
     html += bmRenderChildrenPanel("panel-p2", "Reference (P2 - Read When Relevant)", p2Content, "#74b9ff");
