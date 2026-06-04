@@ -9,17 +9,46 @@ const memoryApiUrl = process.env.MEMORY_API_URL || "";
 const token = process.env.MEMORY_QUERY_TOKEN || process.env.MEMORY_API_TOKEN || process.env.MEMORY_MCP_TOKEN || "";
 const outputDir = process.env.RECALL_OUTPUT_DIR || "audit/results";
 
-if (!stewardUrl && !memoryApiUrl) {
-  console.error("Set MEMORY_QUERY_URL for a Steward endpoint or MEMORY_API_URL for a raw memory API endpoint.");
+function exitConfigError(message, details = {}) {
+  console.log(JSON.stringify({
+    ok: false,
+    error: message,
+    ...details,
+  }, null, 2));
   process.exit(2);
+}
+
+if (!stewardUrl && !memoryApiUrl) {
+  exitConfigError("Set MEMORY_QUERY_URL for a Steward endpoint or MEMORY_API_URL for a raw memory API endpoint.", {
+    required_env: ["MEMORY_QUERY_URL or MEMORY_API_URL"],
+    optional_env: ["MEMORY_QUERY_TOKEN", "MEMORY_API_TOKEN", "MEMORY_MCP_TOKEN", "RECALL_QUERIES_FILE", "RECALL_OUTPUT_DIR"],
+    example: "MEMORY_API_URL=https://your-memory-api.example.com node scripts/evals/recall-baseline.mjs",
+  });
 }
 
 if (!fs.existsSync(queriesFile)) {
-  console.error(`Missing query file: ${queriesFile}`);
-  process.exit(2);
+  exitConfigError("Missing recall query file.", {
+    query_file: queriesFile,
+    expected_default: "audit/canonical-queries.json",
+  });
 }
 
-const queries = JSON.parse(fs.readFileSync(queriesFile, "utf8"));
+let queries;
+try {
+  queries = JSON.parse(fs.readFileSync(queriesFile, "utf8"));
+} catch (error) {
+  exitConfigError("Could not parse recall query file.", {
+    query_file: queriesFile,
+    parse_error: error instanceof Error ? error.message : String(error),
+  });
+}
+
+if (!Array.isArray(queries)) {
+  exitConfigError("Recall query file must be a JSON array.", {
+    query_file: queriesFile,
+  });
+}
+
 const headers = {
   "Content-Type": "application/json",
   ...(token ? { Authorization: `Bearer ${token}`, "x-api-key": token } : {}),

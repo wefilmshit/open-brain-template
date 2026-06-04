@@ -82,5 +82,11 @@ People usually find this project through terms like:
 - persistent AI memory
 - Supabase pgvector memory
 - semantic recall
+- keyword search recent memories
 - memory dashboard
+- MCP memory dashboard
+- Open Brain Optimization Kit
+- Memory File Sync Kit
+- memory file sync
+- Mem0 memory
 - Open Brain
