@@ -2,14 +2,16 @@
 
 This kit gives an Open Brain owner a repeatable way to improve memory quality without guessing, shipping blind, or mixing private runtime state into a public template.
 
-Use it when you are tuning recall, adding dashboard search, changing memory ranking, publishing a template, or writing a handoff for another agent or developer.
+Use it when you are tuning recall, adding dashboard search, changing memory ranking, publishing a template, adding Prime Radiant operating-board behavior, or writing a handoff for another agent or developer.
 
 ## What This Kit Includes
 
 - Smoke checks for dashboard search, memory health, and private-leak scanning.
 - Eval checks for recall baselines and before/after quality comparisons.
 - Templates for closeouts, gate reports, and rollout reports.
+- Prime Radiant templates for lanes, board readiness, and write-back reports.
 - Prompt packs for builder, reviewer, steward, and hygiene roles.
+- Prime Radiant reviewer prompt for board, gate, and write-back review.
 - Plain-English playbooks for common memory-system failure modes.
 
 ## Public Boundary
@@ -22,6 +24,7 @@ Do not add:
 - API keys, bearer tokens, service-role keys, private Mem0 namespace names, or deployment credentials.
 - Private agent personas or private team-specific routing rules.
 - Claims that a keyword dashboard search is semantic recall.
+- Claims that dry-run Prime Radiant proof is live-write approval.
 
 If a guide needs private lore to make sense, rewrite it until a stranger can use it with their own Open Brain.
 
@@ -111,6 +114,56 @@ Diagnose in order:
 4. Rerun the board collector or drift check.
 5. Only then decide whether the row is real drift, missing evidence, or a false classifier.
 
+## Prime Radiant Gates
+
+Prime Radiant gates must stay separate.
+
+Do not blend:
+
+- read-only board proof
+- interactive picture proof
+- receiver dry-run proof
+- deployed dry-run proof
+- live assignment write proof
+- replay proof
+- rollback proof
+- public claim proof
+
+Each gate gets its own receipt. A green board row does not authorize a live write. A live write does not prove rollback. A rollback does not authorize the next operation.
+
+## Agent Roster And Project Tags
+
+Prime Radiant needs an agent roster before assignment state is meaningful.
+
+Record:
+
+- agent id
+- display name
+- availability
+- project tags
+- lane tags
+- allowed operations
+- current assignments
+
+Do not infer authority from a display name. Authority belongs in allowed operations.
+
+## Memory Red-Team / Seldon Crisis Guard
+
+Use observe-only mode before any park or block behavior.
+
+Track:
+
+- stale memory
+- duplicate memory
+- contradictory memory
+- bad recall
+- missing proof
+- stale Chevrons
+- board rows that cannot be checked
+- claims that promote dry-run or preview proof into live proof
+
+Park/block behavior needs measured false-positive rates and operator approval. A guard that blocks good memories is not a guard. It is an outage with manners.
+
 ## Duplicate Memories
 
 When duplicate memories pile up:
@@ -168,4 +221,8 @@ Each script documents its required environment variables when run without enough
 - `templates/closeout.md` captures what changed, proof, caveats, and operator action.
 - `templates/gate-report.md` separates quality, speed, safety, and deployment readiness.
 - `templates/rollout-report.md` records staged rollout state without pretending preview equals live.
+- `templates/prime-radiant-board-readiness.md` checks board views, evidence quality, stale rows, and denominator boundaries.
+- `templates/prime-radiant-lane.md` records one plan lane, owner, gate, proof, assignment state, rollback, and next action.
+- `templates/prime-radiant-writeback-report.md` captures assignment write-back request, receipts, replay, rollback, and safety proof.
 - `prompts/` contains role prompts for builder, reviewer, steward, and hygiene passes.
+- `prompts/prime-radiant-reviewer.md` checks Prime Radiant board and write-back changes without blending gates.
