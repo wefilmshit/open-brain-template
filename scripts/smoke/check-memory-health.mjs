@@ -4,7 +4,13 @@ const baseUrl = process.env.MEMORY_API_URL;
 const token = process.env.MEMORY_API_TOKEN || process.env.MEMORY_MCP_TOKEN || "";
 
 if (!baseUrl) {
-  console.error("Missing MEMORY_API_URL. Example: MEMORY_API_URL=https://your-memory-api.example.com node scripts/smoke/check-memory-health.mjs");
+  console.log(JSON.stringify({
+    ok: false,
+    error: "Missing MEMORY_API_URL.",
+    required_env: ["MEMORY_API_URL"],
+    optional_env: ["MEMORY_API_TOKEN", "MEMORY_MCP_TOKEN"],
+    example: "MEMORY_API_URL=https://your-memory-api.example.com node scripts/smoke/check-memory-health.mjs",
+  }, null, 2));
   process.exit(2);
 }
 

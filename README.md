@@ -2,7 +2,7 @@
 
 **Persistent AI agent memory with an MCP-compatible dashboard, Supabase pgvector recall, Mem0 support, an Optimization Kit, and a Memory File Sync Kit.**
 
-Open Brain is an MIT-licensed template for managing what your AI agents know, when they load it, and how they prioritize context. It gives Claude Code, Claude Desktop, ChatGPT, Cursor, and other MCP-compatible tools one persistent memory bank with visual editing, agent recall, and repeatable optimization checks.
+Open Brain is an MIT-licensed template for managing what your AI agents know, when they load it, and how they prioritize context. It gives Claude Code, Claude Desktop, ChatGPT, Cursor, and other MCP-compatible tools one persistent memory bank with visual editing, honest dashboard keyword search, agent recall, and repeatable optimization checks.
 
 Works with Claude Code, Claude Desktop, ChatGPT, Cursor, or any MCP-compatible AI tool. Pairs with [Mem0](https://mem0.ai) for intelligent memory compression and deduplication. Includes optional Memory Steward docs for a smart-query layer that can reformulate, re-rank, deduplicate, and cite memory results.
 
@@ -14,7 +14,7 @@ New to AI memory systems? Start with [Give This Repo to Your AI](docs/give-this-
 
 AI agents start every session with amnesia. You re-explain your preferences, re-state your rules, re-describe your project. Notes apps and docs don't solve this because they're flat. The AI doesn't know what to read first, what's critical vs. reference, or when to load what.
 
-And even when you have a memory bank wired up, raw semantic recall returns noise. Ask "what's our deploy procedure" and you get back five tangentially related memories, only one of which is actually the answer. The AI then has to read all of them and guess.
+And even when you have a memory bank wired up, raw recall or search can return noise. Ask "what's our deploy procedure" and you get back five tangentially related memories, only one of which is actually the answer. The AI then has to read all of them and guess.
 
 ## How Open Brain Solves It
 
@@ -40,7 +40,7 @@ And even when you have a memory bank wired up, raw semantic recall returns noise
 
 ## Screenshots
 
-These are sanitized template screenshots, not a private production memory bank.
+These are sanitized template screenshots, not a private production memory bank. The dashboard screenshot also shows the public template's keyword-search boundary; semantic recall remains an agent-memory path unless you wire and prove semantic dashboard search separately.
 
 ### Brain Map - Visual Memory Hierarchy
 ![Open Brain dashboard showing a sanitized visual memory hierarchy](brain-map.png)
@@ -223,6 +223,8 @@ The Memory Steward path is optional — the older direct `recall` / `remember` p
 - [docs/session-start-hook.md](docs/session-start-hook.md) — auto-load hook script + Claude Code settings.json snippet
 - [docs/optimization-kit.md](docs/optimization-kit.md) — smoke checks, evals, prompts, templates, and public playbooks for safe optimization
 - [docs/memory-file-sync.md](docs/memory-file-sync.md) — optional markdown file sync scripts for `memory-file` rows
+
+Common search phrases for this template include AI agent memory dashboard, MCP memory dashboard, Claude Code memory, ChatGPT memory, Cursor memory, Supabase pgvector recall, Mem0 memory, persistent AI memory, Open Brain Optimization Kit, and Memory File Sync Kit.
 
 ## Contributing
 PRs welcome. If you build something cool on top of this, open a PR or issue.
