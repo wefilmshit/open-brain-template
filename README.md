@@ -1,8 +1,8 @@
-# Open Brain - Open-Source AI Agent Memory Dashboard for Claude, ChatGPT, Cursor, MCP, Supabase, and pgvector
+# Open Brain + Prime Radiant - Open-Source AI Agent Memory Dashboard and Operating Board for Claude, ChatGPT, Cursor, MCP, Supabase, and pgvector
 
-**Persistent AI agent memory with an MCP-compatible dashboard, Supabase pgvector recall, Mem0 support, an Optimization Kit, and a Memory File Sync Kit.**
+**Persistent AI agent memory with an MCP-compatible dashboard, Supabase pgvector recall, Mem0 support, Prime Radiant operating-board docs, an Optimization Kit, and a Memory File Sync Kit.**
 
-Open Brain is an MIT-licensed template for managing what your AI agents know, when they load it, and how they prioritize context. It gives Claude Code, Claude Desktop, ChatGPT, Cursor, and other MCP-compatible tools one persistent memory bank with visual editing, honest dashboard keyword search, agent recall, and repeatable optimization checks.
+Open Brain is an MIT-licensed template for managing what your AI agents know, when they load it, how they prioritize context, and how multi-agent work gets tracked. It gives Claude Code, Claude Desktop, ChatGPT, Cursor, and other MCP-compatible tools one persistent memory bank with visual editing, honest dashboard keyword search, agent recall, Prime Radiant operating-board patterns, and repeatable optimization checks.
 
 Works with Claude Code, Claude Desktop, ChatGPT, Cursor, or any MCP-compatible AI tool. Pairs with [Mem0](https://mem0.ai) for intelligent memory compression and deduplication. Includes optional Memory Steward docs for a smart-query layer that can reformulate, re-rank, deduplicate, and cite memory results.
 
@@ -23,6 +23,12 @@ And even when you have a memory bank wired up, raw recall or search can return n
 **Visual brain map.** See your entire memory hierarchy at a glance. Click any node to expand, edit, or delete. Know exactly what your AI knows.
 
 **Agent comms view.** Track prompt/response artifacts saved by multiple agents as lightweight pointer memories tagged `agent-artifact`, with from/to/topic/date/priority columns and click-throughs to the source file path.
+
+**Prime Radiant operating board.** Turn memory, agent artifacts, Chevrons, splices, gates, assignment state, write-back receipts, and rollback plans into one operating board for multi-agent work. The public package includes the model, staged implementation path, write-back safety contract, prompt, and report templates. See [docs/prime-radiant.md](docs/prime-radiant.md).
+
+**Agent roster and project tags.** Define which agents exist, what they can own, which project or lane tags apply, and which operations they are allowed to perform. Prime Radiant uses this roster to make ownership visible before any assignment changes happen.
+
+**Memory Red-Team / Seldon Crisis Guard.** Surface stale memories, duplicate memories, contradictory memory, bad recall, missing proof, stale Chevrons, and unsafe gate claims before they become trusted context. Start observe-only, then add park/block behavior only after false-positive rates are acceptable.
 
 **Agent semantic recall.** Let your AI retrieve memory by meaning through the memory API and pgvector embeddings. The dashboard search is intentionally labeled as keyword search unless you wire and prove semantic dashboard search separately.
 
@@ -62,6 +68,9 @@ These are sanitized template screenshots, not a private production memory bank. 
 | Priority loading | No | P1-P4 system |
 | Agent semantic recall | No | pgvector embeddings |
 | Smart query (re-rank, dedup) | No | Memory Steward smart-query layer |
+| Multi-agent operating board | No | Prime Radiant |
+| Agent ownership map | No | Agent roster + project tags |
+| Drift and crisis guard | No | Memory Red-Team / Seldon Crisis Guard |
 | Agent-readable | Copy-paste | MCP protocol (native) |
 | Session boot sequence | Manual | Automatic checklist |
 | Auto-load on session start | No | SessionStart hook |
@@ -88,6 +97,29 @@ Your AI agent follows this boot sequence every session:
 
 ### The /refresh Pattern
 Long AI sessions cause context drift — the agent "forgets" rules loaded at the start. The `/refresh` command forces re-reading of P1 rules mid-session without starting over.
+
+### Prime Radiant
+Prime Radiant is the operating-board layer on top of Open Brain. It answers the questions memory alone cannot:
+
+- Which agent owns this lane?
+- Which plan or sub-plan is active?
+- What proof exists?
+- What gate is still blocked?
+- What changed since the last checkpoint?
+- Is this a read-only observation, an interactive planning move, or a real assignment write?
+
+The public package includes:
+
+- **Chevrons** - current position markers for plans and lanes.
+- **Seldon Plans** - durable plans or roadmaps.
+- **Splices** - sub-plans or branch lanes under a larger plan.
+- **Seldon Crises** - plan-vs-reality drift, stale evidence, bad recall, or blocked gates.
+- **Agent Roster + Project Tags** - agents, availability, lane tags, allowed operations, and current assignments.
+- **Gate reports and closeouts** - receipts for review, merge, deploy, dry-run, live-write, rollback, and publish decisions.
+- **Write-back safety contract** - off-switch, dry-run default, audit receipt, idempotency, rollback, and no browser-to-database or browser-to-plan-file write path.
+- **Memory Red-Team / Seldon Crisis Guard** - observe-only detection first, then park/block behavior only after false-positive rates are measured and accepted.
+
+Start with [docs/prime-radiant.md](docs/prime-radiant.md).
 
 ### Mem0 Integration (Recommended)
 [Mem0](https://mem0.ai) adds an intelligent layer on top of Open Brain:
@@ -140,8 +172,9 @@ The hook script template lives at [docs/session-start-hook.md](docs/session-star
 4. Add your email to `ALLOWED_EMAILS`
 5. Deploy to [Vercel](https://vercel.com)
 6. (Optional) Add the SessionStart hook for auto-loading
-7. (Optional, advanced) Stand up Memory Steward via [docs/memory-steward.md](docs/memory-steward.md)
-8. (Optional, advanced) Sync local markdown memory files with Open Brain rows via [docs/memory-file-sync.md](docs/memory-file-sync.md)
+7. Add Prime Radiant operating-board structure via [docs/prime-radiant.md](docs/prime-radiant.md)
+8. (Optional, advanced) Stand up Memory Steward via [docs/memory-steward.md](docs/memory-steward.md)
+9. (Optional, advanced) Sync local markdown memory files with Open Brain rows via [docs/memory-file-sync.md](docs/memory-file-sync.md)
 
 Full setup instructions are in [CLAUDE.md](CLAUDE.md). If you want your assistant to help with setup, start with [docs/give-this-to-your-ai.md](docs/give-this-to-your-ai.md).
 
@@ -153,6 +186,7 @@ Full setup instructions are in [CLAUDE.md](CLAUDE.md). If you want your assistan
 - **Memory Protocol:** MCP (Model Context Protocol)
 - **Smart Layer (recommended):** Mem0 for compression, dedup, and ranking
 - **Smart Query (optional, advanced):** Memory Steward smart-query layer
+- **Operating Board:** Prime Radiant model, Chevrons, splices, gates, assignment receipts, red-team crisis guard, and write-back safety contract
 
 ## How Your AI Agent Uses This
 
@@ -178,6 +212,9 @@ Load specific memories on-demand:
   |
   v
 After meaningful work, save a checkpoint
+  |
+  v
+Prime Radiant records lane ownership, gate state, proof, and next action
 ```
 
 ## Architecture
@@ -200,11 +237,24 @@ You <-> AI Agent (Claude/GPT/Cursor)
             |
             v
         Open Brain Dashboard (visual UI)
+            |
+            v
+        Prime Radiant Board
+        (Chevrons, splices, agents, gates, receipts, rollback)
 ```
 
 The Memory Steward path is optional — the older direct `recall` / `remember` path still works. Adding the Steward gives you smarter recall without breaking anything that already works.
 
 ## What's New (Changelog)
+
+### June 2026 — Prime Radiant operating-board package
+- New Prime Radiant docs for turning Open Brain into an AI-agent operating board
+- New Chevrons / Seldon Plans / Splices / Seldon Crises vocabulary for plan state and drift
+- New Agent Roster + Project Tags pattern for lane ownership and allowed operations
+- New Memory Red-Team / Seldon Crisis Guard pattern for stale memory, duplicate memory, bad recall, and blocked-gate detection
+- New write-back safety contract for assignment-style operations: off-switch, dry-run default, audit receipt, idempotency, rollback, and receiver-side validation
+- New templates for lanes, assignment write-back reports, and board readiness
+- New Prime Radiant reviewer prompt for checking board changes without blending read-only proof, dry-run proof, deployed proof, and live-write approval
 
 ### April 2026 — Memory Steward release
 - New `memory_query` MCP tool: smart query layer via Anthropic Managed Agent
@@ -221,10 +271,11 @@ The Memory Steward path is optional — the older direct `recall` / `remember` p
 - [docs/give-this-to-your-ai.md](docs/give-this-to-your-ai.md) — pasteable setup brief for Claude, ChatGPT, Cursor, or another AI assistant
 - [docs/memory-steward.md](docs/memory-steward.md) — create the Managed Agent + stand up the orchestrator
 - [docs/session-start-hook.md](docs/session-start-hook.md) — auto-load hook script + Claude Code settings.json snippet
+- [docs/prime-radiant.md](docs/prime-radiant.md) — Prime Radiant operating-board model, agent roster, crisis guard, and write-back safety architecture
 - [docs/optimization-kit.md](docs/optimization-kit.md) — smoke checks, evals, prompts, templates, and public playbooks for safe optimization
 - [docs/memory-file-sync.md](docs/memory-file-sync.md) — optional markdown file sync scripts for `memory-file` rows
 
-Common search phrases for this template include AI agent memory dashboard, MCP memory dashboard, Claude Code memory, ChatGPT memory, Cursor memory, Supabase pgvector recall, Mem0 memory, persistent AI memory, Open Brain Optimization Kit, and Memory File Sync Kit.
+Common search phrases for this template include AI agent memory dashboard, AI agent operating board, Prime Radiant, AI agent control plane, AI agent assignment board, AI red-team memory guard, MCP memory dashboard, Claude Code memory, ChatGPT memory, Cursor memory, Supabase pgvector recall, Mem0 memory, persistent AI memory, Open Brain Optimization Kit, and Memory File Sync Kit.
 
 ## Contributing
 PRs welcome. If you build something cool on top of this, open a PR or issue.

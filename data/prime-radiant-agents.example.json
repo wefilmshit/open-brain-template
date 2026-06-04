@@ -1,0 +1,26 @@
+[
+  {
+    "id": "builder",
+    "name": "Builder",
+    "status": "available",
+    "project_tags": ["open-brain", "frontend"],
+    "lane_tags": ["implementation", "docs"],
+    "allowed_operations": ["draft", "build", "closeout"]
+  },
+  {
+    "id": "reviewer",
+    "name": "Reviewer",
+    "status": "available",
+    "project_tags": ["open-brain", "readability"],
+    "lane_tags": ["review", "public-claim"],
+    "allowed_operations": ["review", "gate-report"]
+  },
+  {
+    "id": "proof",
+    "name": "Proof",
+    "status": "available",
+    "project_tags": ["open-brain", "quality"],
+    "lane_tags": ["runtime-proof", "smoke"],
+    "allowed_operations": ["smoke", "verify", "report"]
+  }
+]

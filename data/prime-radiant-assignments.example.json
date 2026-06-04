@@ -1,0 +1,18 @@
+[
+  {
+    "plan_id": "open-brain-relaunch",
+    "splice_id": "prime-radiant-public-package",
+    "agent_id": "builder",
+    "role": "owner",
+    "status": "active",
+    "created_at": "2026-06-04T00:00:00Z"
+  },
+  {
+    "plan_id": "open-brain-relaunch",
+    "splice_id": "prime-radiant-public-package",
+    "agent_id": "reviewer",
+    "role": "reviewer",
+    "status": "pending",
+    "created_at": "2026-06-04T00:00:00Z"
+  }
+]
