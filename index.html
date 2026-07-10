@@ -1035,16 +1035,30 @@ async function createFile() {
   const priority = parseInt(document.getElementById("new-file-priority").value);
   const content = document.getElementById("new-file-content").value.trim();
   if (!name || !content) { alert("Name and content are required."); return; }
+  const file_name = name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".md";
   const summary = `[P${priority}] ${name} — ${description}`;
-  const metadata = { name, description, file_type, load_priority: priority, file_name: name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".md", synced_at: new Date().toISOString() };
+  const tags = [`priority-${priority}`, file_type, file_name.replace(".md", "")];
+  const metadata = { name, description, file_type, load_priority: priority, file_name, synced_at: new Date().toISOString() };
+  // Upsert by file_name: a brain file is identified by its filename, so
+  // re-saving the same name UPDATES the existing row instead of creating a
+  // second copy. See docs/self-hosting-fixes.md.
+  const existing = allFiles.find(f => (f.metadata && f.metadata.file_name) === file_name);
   try {
-    await api("add", {}, { method: "POST", body: { content, summary, category: "memory-file", source: "open-brain", tags: [`priority-${priority}`, file_type, metadata.file_name.replace(".md", "")], metadata }});
+    if (existing) {
+      if (!confirm(`A brain file named "${file_name}" already exists.\n\nUpdate it in place? (Cancel to rename instead.)`)) return;
+      await api("update", {}, { method: "PUT", body: {
+        id: existing.id, content, summary, category: "memory-file", tags,
+        metadata: { ...(existing.metadata || {}), ...metadata },
+      }});
+    } else {
+      await api("add", {}, { method: "POST", body: { content, summary, category: "memory-file", source: "open-brain", tags, metadata }});
+    }
     document.getElementById("new-file-name").value = "";
     document.getElementById("new-file-desc").value = "";
     document.getElementById("new-file-content").value = "";
     document.getElementById("create-file-form").style.display = "none";
     loadFiles();
-  } catch (err) { alert("Create failed: " + err.message); }
+  } catch (err) { alert((existing ? "Update" : "Create") + " failed: " + err.message); }
 }
 
 // ── Agent Comms Tab ──

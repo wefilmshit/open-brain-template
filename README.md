@@ -168,13 +168,15 @@ The hook script template lives at [docs/session-start-hook.md](docs/session-star
 
 1. Create a [Supabase](https://supabase.com) project
 2. Clone this repo
-3. Replace `YOUR_SUPABASE_URL` and `YOUR_SUPABASE_ANON_KEY` in `index.html`
-4. Add your email to `ALLOWED_EMAILS`
-5. Deploy to [Vercel](https://vercel.com)
-6. (Optional) Add the SessionStart hook for auto-loading
-7. Add Prime Radiant operating-board structure via [docs/prime-radiant.md](docs/prime-radiant.md)
-8. (Optional, advanced) Stand up Memory Steward via [docs/memory-steward.md](docs/memory-steward.md)
-9. (Optional, advanced) Sync local markdown memory files with Open Brain rows via [docs/memory-file-sync.md](docs/memory-file-sync.md)
+3. Deploy the memory backend: apply the migration and deploy the Edge Function in [supabase/README.md](supabase/README.md) -- this is what actually stores and serves memories; the dashboard alone has nothing to talk to without it
+4. Replace `YOUR_SUPABASE_URL` and `YOUR_SUPABASE_ANON_KEY` in `index.html`
+5. Add your email to `ALLOWED_EMAILS`
+6. Deploy to [Vercel](https://vercel.com)
+7. Wire up [memory-server/](memory-server/) so Claude Code, Claude Desktop, or Cursor can read/write memories via MCP
+8. (Optional) Add the SessionStart hook for auto-loading
+9. Add Prime Radiant operating-board structure via [docs/prime-radiant.md](docs/prime-radiant.md)
+10. (Optional, advanced) Stand up Memory Steward via [docs/memory-steward.md](docs/memory-steward.md)
+11. (Optional, advanced) Sync local markdown memory files with Open Brain rows via [docs/memory-file-sync.md](docs/memory-file-sync.md)
 
 Full setup instructions are in [CLAUDE.md](CLAUDE.md). If you want your assistant to help with setup, start with [docs/give-this-to-your-ai.md](docs/give-this-to-your-ai.md).
 
@@ -223,7 +225,7 @@ Prime Radiant records lane ownership, gate state, proof, and next action
 You <-> AI Agent (Claude/GPT/Cursor)
             |
             v
-        MCP Server (personal-memory)
+        MCP Server (memory-server/, ships in this repo)
         |        |
         |        v
         |    Memory Steward Managed Agent (new, optional)
