@@ -64,10 +64,14 @@ trade-off.
 ## Run it standalone (for testing)
 
 ```bash
-node server.mjs
+node --env-file=.env server.mjs
 ```
 
 It logs `open-brain-memory-server running on stdio` to stderr and then waits
 for MCP protocol messages on stdin. Ctrl-C to stop. This is mainly useful to
 confirm your `.env` is valid before wiring it into a client -- an MCP client
 will start/stop this process for you in normal use.
+
+The standalone command uses Node's built-in `.env` loader (Node 20.6+). MCP
+client wiring remains compatible with older supported Node versions because
+the client injects the variables through its local `env` configuration.
