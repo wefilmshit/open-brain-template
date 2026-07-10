@@ -40,15 +40,17 @@ A visual brain map dashboard for AI memory systems. One database (Supabase), one
 - Deploy (zero config needed, it's static HTML + one API route)
 - Add your custom domain if desired
 
-### Step 4: Set Up MCP Memory Server
-- Install the personal-memory MCP server for Claude Code
-- Point it at your Supabase project
+### Step 4: Set Up the Memory Backend
+- Apply the schema and deploy the Edge Function: see [supabase/README.md](supabase/README.md)
+- Install and configure the MCP server: `cd memory-server && npm install`, then see [memory-server/README.md](memory-server/README.md) for wiring it into Claude Code, Claude Desktop, or Cursor
 - Claude Code will now read/write memories that appear in this dashboard
 
 ## Architecture
 - `index.html` — Single-file dashboard (HTML + CSS + JS, no build step)
 - `api/memories.js` — Vercel serverless proxy to Supabase (handles auth)
 - `vercel.json` — Route config
+- `supabase/` — Database migration + the `memory-api` Edge Function (the actual backend; see [supabase/README.md](supabase/README.md))
+- `memory-server/` — Generic MCP server over `memory-api` (see [memory-server/README.md](memory-server/README.md))
 
 ## Key Concepts
 

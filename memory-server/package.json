@@ -1,0 +1,21 @@
+{
+  "name": "open-brain-memory-server",
+  "version": "1.0.0",
+  "description": "Generic MCP memory server for Open Brain. Stdio transport -- works with Claude Code, Claude Desktop, Cursor, or any MCP-compatible client, no separate hosting required.",
+  "type": "module",
+  "main": "server.mjs",
+  "bin": {
+    "open-brain-memory-server": "server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
