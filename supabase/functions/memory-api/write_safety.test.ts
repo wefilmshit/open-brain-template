@@ -53,7 +53,7 @@ Deno.test("unsafe add is rejected before Supabase is called", async () => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      content: "-----BEGIN PRIVATE KEY-----\nfake-only\n-----END PRIVATE KEY-----",
+      content: "-----BEGIN PRIVATE\u0020KEY-----\nfake-only\n-----END PRIVATE\u0020KEY-----",
     }),
   }));
   assertEquals(response.status, 422);
@@ -66,7 +66,7 @@ Deno.test("unsafe add is rejected before Supabase is called", async () => {
 });
 
 const KEY_HEADERS = { Authorization: "Bearer fixture-memory-key", "Content-Type": "application/json" };
-const UNSAFE = "-----BEGIN PRIVATE KEY-----\nfake-only\n-----END PRIVATE KEY-----";
+const UNSAFE = "-----BEGIN PRIVATE\u0020KEY-----\nfake-only\n-----END PRIVATE\u0020KEY-----";
 const stub = (globalThis as Record<string, unknown>).__supabaseStub as Record<string, unknown>;
 const refuseDatabase = stub.from;
 

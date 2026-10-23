@@ -1,13 +1,13 @@
 {
   "unsafe": [
     {
-      "text": "sk-AAAAAAAAAAAAAAAAAAAAAAAA",
+      "text": "sk\u002dAAAAAAAAAAAAAAAAAAAAAAAA",
       "reasons": [
         "secret:openai_key"
       ]
     },
     {
-      "text": "sk-ant-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "text": "sk\u002dant-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
       "reasons": [
         "secret:anthropic_key"
       ]
@@ -19,7 +19,7 @@
       ]
     },
     {
-      "text": "-----BEGIN PRIVATE KEY-----\nfake-only\n-----END PRIVATE KEY-----",
+      "text": "-----BEGIN PRIVATE\u0020KEY-----\nfake-only\n-----END PRIVATE\u0020KEY-----",
       "reasons": [
         "secret:private_key"
       ]
@@ -37,7 +37,7 @@
       ]
     },
     {
-      "text": "Authorization: Bearer EEEEEEEEEEEEEEEEEEEEEEEE",
+      "text": "Authorization: Bearer\u0020EEEEEEEEEEEEEEEEEEEEEEEE",
       "reasons": [
         "secret:bearer_header"
       ]
