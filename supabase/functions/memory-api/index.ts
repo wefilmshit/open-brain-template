@@ -16,6 +16,7 @@
 // confirmation_status. See docs/self-hosting-fixes.md if you want one.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { unsafeReasons } from "./write_safety.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -92,40 +93,99 @@ async function sha256Hex(text: string): Promise<string> {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-function json(body: unknown, status = 200) {
+export async function constantTimeEqual(a: string, b: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const [aDigest, bDigest] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(a)),
+    crypto.subtle.digest("SHA-256", encoder.encode(b)),
+  ]);
+  const aBytes = new Uint8Array(aDigest);
+  const bBytes = new Uint8Array(bDigest);
+  let difference = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < Math.max(aBytes.length, bBytes.length); i += 1) {
+    difference |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  }
+  return difference === 0;
+}
+
+function corsOriginFor(origin: string | null, allowed: string[]): string | null {
+  if (allowed.includes("*")) return "*";
+  return origin && allowed.includes(origin) ? origin : null;
+}
+
+function corsHeaders(req: Request): Record<string, string> {
+  const allowed = (Deno.env.get("MEMORY_API_ALLOWED_ORIGINS") || "")
+    .split(",").map((origin) => origin.trim()).filter(Boolean);
+  const origin = corsOriginFor(req.headers.get("origin"), allowed);
+  return {
+    ...(origin ? { "Access-Control-Allow-Origin": origin } : {}),
+    ...(allowed.length && !allowed.includes("*") ? { Vary: "Origin" } : {}),
+  };
+}
+
+function json(req: Request, body: unknown, status = 200, extraHeaders: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json", ...extraHeaders },
   });
 }
 
-function errorResponse(status: number, error: string, extra: Record<string, unknown> = {}) {
-  return json({ error, ...extra }, status);
+function errorResponse(
+  req: Request,
+  status: number,
+  error: string,
+  extra: Record<string, unknown> = {},
+  headers: Record<string, string> = {},
+) {
+  return json(req, { error, ...extra }, status, headers);
 }
 
-function requireAuth(req: Request): Response | null {
+async function requireAuth(req: Request): Promise<Response | null> {
   const key = req.headers.get("x-api-key") ||
     (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  if (!key || key !== MEMORY_API_KEY) {
-    return errorResponse(401, "Unauthorized");
+  if (!key || !(await constantTimeEqual(key, MEMORY_API_KEY))) {
+    return errorResponse(req, 401, "Unauthorized", {}, {
+      "WWW-Authenticate": 'Bearer realm="open-brain"',
+    });
   }
   return null;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Checks the text a memory carries (content and summary together, as the MCP
+// server does). Tags and metadata are not checked.
+function writeSafety(content: unknown, summary: unknown, metadata: unknown) {
+  const configured = (Deno.env.get("MEMORY_WRITE_SAFETY") || "enforce").toLowerCase();
+  const mode = configured === "off" || configured === "observe" ? configured : "enforce";
+  const text = [content, summary].filter((value): value is string => typeof value === "string").join("\n");
+  const reasons = mode === "off" || !text ? [] : unsafeReasons(text);
+  if (mode === "observe" && reasons.length) {
+    console.warn("memory write safety observed", { reasons });
+    // Tag only metadata the caller sent. An update without metadata must leave the
+    // row's existing metadata alone, not replace it with { write_safety }.
+    if (metadata === undefined) return { mode, reasons, metadata };
+    return {
+      mode,
+      reasons,
+      metadata: { ...((metadata && typeof metadata === "object") ? metadata : {}), write_safety: reasons },
+    };
+  }
+  return { mode, reasons, metadata };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       headers: {
-        "Access-Control-Allow-Origin": "*",
+        ...corsHeaders(req),
         "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization, x-api-key",
       },
     });
   }
 
-  const authFailure = requireAuth(req);
+  const authFailure = await requireAuth(req);
   if (authFailure) return authFailure;
 
   const url = new URL(req.url);
@@ -137,7 +197,15 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { content, summary, category, source, tags, metadata, confirmation_status } = body;
       if (!content || typeof content !== "string") {
-        return errorResponse(400, "content is required");
+        return errorResponse(req, 400, "content is required");
+      }
+
+      const safety = writeSafety(content, summary, metadata ?? {});
+      if (safety.mode === "enforce" && safety.reasons.length) {
+        return errorResponse(req, 422, "Unsafe memory content", {
+          code: "UNSAFE_CONTENT",
+          reasons: safety.reasons,
+        });
       }
 
       const fingerprint = await sha256Hex(content);
@@ -153,7 +221,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (existing) {
-        const mergedMetadata = { ...(existing.metadata || {}), ...(metadata || {}) };
+        const mergedMetadata = { ...(existing.metadata || {}), ...(safety.metadata || {}) };
         const mergedTags = Array.from(new Set([...(existing.tags || []), ...(tags || [])]));
         const { data, error } = await supabase
           .from("memories")
@@ -168,7 +236,7 @@ Deno.serve(async (req) => {
           .select("id, summary, category, tags, metadata, created_at, updated_at")
           .single();
         if (error) throw error;
-        return json({ success: true, memory: data, deduped: true });
+        return json(req, { success: true, memory: data, deduped: true });
       }
 
       const { data, error } = await supabase
@@ -179,21 +247,29 @@ Deno.serve(async (req) => {
           category: category || "general",
           source: source || "manual",
           tags: tags || [],
-          metadata: metadata || {},
+          metadata: safety.metadata || {},
           confirmation_status: confirmation_status || "evidence",
           content_fingerprint: fingerprint,
         })
         .select("id, summary, category, tags, metadata, created_at, updated_at")
         .single();
       if (error) throw error;
-      return json({ success: true, memory: data });
+      return json(req, { success: true, memory: data });
     }
 
     // ── UPDATE ─────────────────────────────────────────────────────────
     if (req.method === "PUT" && path === "/update") {
       const body = await req.json();
       const { id, content, summary, category, tags, metadata, confirmation_status } = body;
-      if (!id) return errorResponse(400, "id is required");
+      if (!id) return errorResponse(req, 400, "id is required");
+
+      const safety = writeSafety(content, summary, metadata);
+      if (safety.mode === "enforce" && safety.reasons.length) {
+        return errorResponse(req, 422, "Unsafe memory content", {
+          code: "UNSAFE_CONTENT",
+          reasons: safety.reasons,
+        });
+      }
 
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (content !== undefined) {
@@ -203,7 +279,7 @@ Deno.serve(async (req) => {
       if (summary !== undefined) updates.summary = summary;
       if (category !== undefined) updates.category = category;
       if (tags !== undefined) updates.tags = tags;
-      if (metadata !== undefined) updates.metadata = metadata;
+      if (safety.metadata !== undefined) updates.metadata = safety.metadata;
       if (confirmation_status !== undefined) updates.confirmation_status = confirmation_status;
 
       const { data, error } = await supabase
@@ -213,8 +289,8 @@ Deno.serve(async (req) => {
         .select("id, summary, category, tags, metadata, created_at, updated_at")
         .single();
       if (error) throw error;
-      if (!data) return errorResponse(404, "not found");
-      return json({ success: true, memory: data });
+      if (!data) return errorResponse(req, 404, "not found");
+      return json(req, { success: true, memory: data });
     }
 
     // ── CORRECT (audit-preserving update) ─────────────────────────────
@@ -225,9 +301,18 @@ Deno.serve(async (req) => {
     if (req.method === "POST" && path === "/correct") {
       const body = await req.json();
       const { id, content, summary, reason } = body;
-      if (!id) return errorResponse(400, "id is required");
+      if (!id) return errorResponse(req, 400, "id is required");
       if (content === undefined && summary === undefined) {
-        return errorResponse(400, "provide content or summary");
+        return errorResponse(req, 400, "provide content or summary");
+      }
+
+      // Same write-safety check as /add and /update, so /correct is not a way around it.
+      const safety = writeSafety(content, summary, undefined);
+      if (safety.mode === "enforce" && safety.reasons.length) {
+        return errorResponse(req, 422, "Unsafe memory content", {
+          code: "UNSAFE_CONTENT",
+          reasons: safety.reasons,
+        });
       }
 
       const { data: existing } = await supabase
@@ -235,7 +320,7 @@ Deno.serve(async (req) => {
         .select("id, content, summary, metadata")
         .eq("id", id)
         .single();
-      if (!existing) return errorResponse(404, "not found");
+      if (!existing) return errorResponse(req, 404, "not found");
 
       const meta = (existing.metadata || {}) as Record<string, unknown>;
       const priorHistory = Array.isArray(meta.supersede_history) ? meta.supersede_history as unknown[] : [];
@@ -250,6 +335,7 @@ Deno.serve(async (req) => {
         supersede_reason: reason || null,
         superseded_at: new Date().toISOString(),
         supersede_history: newHistory,
+        ...(safety.reasons.length ? { write_safety: safety.reasons } : {}),
       };
 
       const updates: Record<string, unknown> = { metadata: newMetadata, updated_at: new Date().toISOString() };
@@ -266,13 +352,13 @@ Deno.serve(async (req) => {
         .select("id, summary, category, metadata, created_at, updated_at")
         .single();
       if (error) throw error;
-      return json({ success: true, memory: data });
+      return json(req, { success: true, memory: data });
     }
 
     // ── ARCHIVE (restorable, not a hard delete) ───────────────────────
     if (req.method === "POST" && path.endsWith("/archive") && !path.startsWith("/archive")) {
       const id = path.split("/")[1];
-      if (!id || !UUID_RE.test(id)) return errorResponse(400, "invalid id");
+      if (!id || !UUID_RE.test(id)) return errorResponse(req, 400, "invalid id");
       const body = await req.json().catch(() => ({}));
       const { data, error } = await supabase.rpc("archive_memory", {
         p_id: id,
@@ -280,22 +366,22 @@ Deno.serve(async (req) => {
         p_archive_reason: body.archive_reason || null,
       });
       if (error) {
-        if (error.code === "P0002") return errorResponse(404, "not found");
+        if (error.code === "P0002") return errorResponse(req, 404, "not found");
         throw error;
       }
-      return json({ success: true, archived: { id: data.id, archived_at: data.archived_at, archive_reason: data.archive_reason } });
+      return json(req, { success: true, archived: { id: data.id, archived_at: data.archived_at, archive_reason: data.archive_reason } });
     }
 
     // ── RESTORE ────────────────────────────────────────────────────────
     if (req.method === "POST" && path.endsWith("/restore") && !path.startsWith("/restore")) {
       const id = path.split("/")[1];
-      if (!id || !UUID_RE.test(id)) return errorResponse(400, "invalid id");
+      if (!id || !UUID_RE.test(id)) return errorResponse(req, 400, "invalid id");
       const { data, error } = await supabase.rpc("restore_memory", { p_id: id });
       if (error) {
-        if (error.code === "P0002") return errorResponse(404, "not found in archive");
+        if (error.code === "P0002") return errorResponse(req, 404, "not found in archive");
         throw error;
       }
-      return json({ success: true, restored: { id: data.id } });
+      return json(req, { success: true, restored: { id: data.id } });
     }
 
     // ── DELETE (two shapes: DELETE /delete {id in body}, DELETE /:id) ──
@@ -307,10 +393,10 @@ Deno.serve(async (req) => {
       } else {
         id = path.slice(1);
       }
-      if (!id) return errorResponse(400, "id is required");
+      if (!id) return errorResponse(req, 400, "id is required");
       const { error } = await supabase.from("memories").delete().eq("id", id);
       if (error) throw error;
-      return json({ success: true, deleted: id });
+      return json(req, { success: true, deleted: id });
     }
 
     // ── RECENT ─────────────────────────────────────────────────────────
@@ -325,26 +411,24 @@ Deno.serve(async (req) => {
       if (category) query = query.eq("category", category);
       const { data, error } = await query;
       if (error) throw error;
-      return json({ memories: data });
+      return json(req, { memories: data });
     }
 
     // ── SEARCH (dashboard keyword search) ──────────────────────────────
     // Per README.md: dashboard search is intentionally keyword search
-    // unless you wire and prove semantic search separately. This does an
-    // ILIKE match over content/summary/tags; no embedding call.
+    // unless you wire and prove semantic search separately. This does a
+    // literal, case-insensitive substring match over content and summary
+    // (public.search_memories_text, migration 0003); no embedding call.
     if (req.method === "GET" && path === "/search") {
       const q = (url.searchParams.get("q") || "").trim();
       const limit = Math.min(Number(url.searchParams.get("limit")) || SEARCH_MAX_RESULTS, SEARCH_MAX_RESULTS);
-      if (!q) return errorResponse(400, "query is required");
+      if (!q) return errorResponse(req, 400, "query is required");
 
-      const { data, error } = await supabase
-        .from("memories")
-        .select("id, content, summary, category, source, tags, metadata, confirmation_status, created_at, updated_at")
-        .or(`content.ilike.%${q}%,summary.ilike.%${q}%`)
-        .order("created_at", { ascending: false })
-        .limit(limit);
+      // Literal substring match in SQL (migration 0003): no pattern syntax, so `*`, `%`,
+      // `_` and every other character in q match only themselves.
+      const { data, error } = await supabase.rpc("search_memories_text", { q, lim: limit });
       if (error) throw error;
-      return json({ results: data, count: data.length });
+      return json(req, { results: data, count: data.length });
     }
 
     // ── RECALL (agent-facing; capped top-K + byte budget) ──────────────
@@ -370,15 +454,12 @@ Deno.serve(async (req) => {
         if (error) throw error;
         rows = data || [];
       } else {
-        if (!query) return errorResponse(400, "query is required (or pass embedding)");
-        let q = supabase
-          .from("memories")
-          .select("id, content, summary, category, source, tags, metadata, confirmation_status, created_at, updated_at")
-          .or(`content.ilike.%${query}%,summary.ilike.%${query}%`)
-          .order("created_at", { ascending: false })
-          .limit(RECALL_MAX_RESULTS_HARD);
-        if (category) q = q.eq("category", category);
-        const { data, error } = await q;
+        if (!query) return errorResponse(req, 400, "query is required (or pass embedding)");
+        const { data, error } = await supabase.rpc("search_memories_text", {
+          q: query,
+          lim: RECALL_MAX_RESULTS_HARD,
+          filter_category: category,
+        });
         if (error) throw error;
         rows = data || [];
       }
@@ -388,7 +469,7 @@ Deno.serve(async (req) => {
         byteBudget: RECALL_BYTE_BUDGET,
         contentMaxChars: RECALL_CONTENT_MAX_CHARS,
       });
-      return json(capped);
+      return json(req, capped);
     }
 
     // ── STATS (exact count, not a row-fetch cap) ───────────────────────
@@ -418,10 +499,10 @@ Deno.serve(async (req) => {
         by_source[row.source] = (by_source[row.source] || 0) + 1;
       }
 
-      return json({ total: exactTotal ?? rows.length, by_category, by_source });
+      return json(req, { total: exactTotal ?? rows.length, by_category, by_source });
     }
 
-    return errorResponse(404, "Not found", {
+    return errorResponse(req, 404, "Not found", {
       routes: [
         "POST /add", "PUT /update", "POST /correct",
         "GET /recent", "GET /search", "POST /recall", "GET /stats",
@@ -431,6 +512,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("memory-api error", err);
-    return errorResponse(500, "Internal error", { message: (err as Error).message });
+    return errorResponse(req, 500, "Internal error", { message: (err as Error).message });
   }
 });

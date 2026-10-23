@@ -12,7 +12,7 @@ export function buildClient({ apiUrl, apiKey }) {
       method,
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
@@ -25,9 +25,11 @@ export function buildClient({ apiUrl, apiKey }) {
     }
     if (!res.ok) {
       const message = data?.error || `request_failed_${res.status}`;
-      const err = new Error(message);
+      const err = new Error(`${res.status}: ${message}`);
       err.status = res.status;
       err.body = data;
+      const retryAfter = res.headers.get("retry-after");
+      if (retryAfter !== null) err.retryAfter = retryAfter;
       throw err;
     }
     return data;

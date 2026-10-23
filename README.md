@@ -20,6 +20,8 @@ After updating:
 2. Change `MEMORY_API_KEY`, both in Vercel and in your Supabase `memory-api` function settings, in case the old route was used.
 3. Look through your Vercel request logs for `/api` calls you don't recognise.
 
+Existing self-hosted memory backends must also apply the delete-guard migration and redeploy the memory API. See [UPGRADING.md](UPGRADING.md) for the exact settings, rollback switches and local verification command.
+
 ## The Problem
 
 AI agents start every session with amnesia. You re-explain your preferences, re-state your rules, re-describe your project. Notes apps and docs don't solve this because they're flat. The AI doesn't know what to read first, what's critical vs. reference, or when to load what.
