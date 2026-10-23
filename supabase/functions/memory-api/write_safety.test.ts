@@ -1,0 +1,66 @@
+import { assertEquals } from "jsr:@std/assert@1";
+import { unsafeReasons } from "./write_safety.ts";
+
+const fixtures = JSON.parse(await Deno.readTextFile(new URL("./write-safety.fixtures.json", import.meta.url)));
+
+Deno.test("write-safety fixtures retain the MCP reason contract", () => {
+  for (const fixture of fixtures.unsafe) {
+    assertEquals(unsafeReasons(fixture.text), fixture.reasons, fixture.reasons.join(","));
+  }
+  for (const text of fixtures.safe) {
+    assertEquals(unsafeReasons(text), [], `safe fixture was flagged: ${text.slice(0, 80)}`);
+  }
+});
+
+Deno.env.set("SUPABASE_URL", "https://fixture.invalid");
+Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "fixture-service-role");
+Deno.env.set("MEMORY_API_KEY", "fixture-memory-key");
+Deno.env.set("MEMORY_WRITE_SAFETY", "enforce");
+
+let databaseCalls = 0;
+(globalThis as Record<string, unknown>).__supabaseStub = {
+  from() {
+    databaseCalls += 1;
+    throw new Error("database must not be called for an unsafe write");
+  },
+};
+
+const handlerUrl = new URL("./index.ts", import.meta.url);
+const searchFilterUrl = new URL("./search_filter.ts", import.meta.url).href;
+const writeSafetyUrl = new URL("./write_safety.ts", import.meta.url).href;
+const source = await Deno.readTextFile(handlerUrl);
+const marker = "Deno.serve(async (req) => {";
+if (source.split(marker).length !== 2) throw new Error("Expected exactly one Deno.serve handler");
+const testSource = source
+  .replace(
+    'import { createClient } from "https://esm.sh/@supabase/supabase-js@2";',
+    "const createClient = () => (globalThis as Record<string, unknown>).__supabaseStub as any;",
+  )
+  .replace('from "./search_filter.ts"', `from "${searchFilterUrl}"`)
+  .replace('from "./write_safety.ts"', `from "${writeSafetyUrl}"`)
+  .replace(marker, "export const capturedHandler = async (req: Request) => {")
+  .replace(/\n\}\);\s*$/, "\n};\n");
+const { capturedHandler: handle } = await import(`data:application/typescript,${encodeURIComponent(testSource)}`) as {
+  capturedHandler: (req: Request) => Promise<Response>;
+};
+
+Deno.test("unsafe add is rejected before Supabase is called", async () => {
+  databaseCalls = 0;
+  const response = await handle(new Request("https://fixture.invalid/memory-api/add", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer fixture-memory-key",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      content: "-----BEGIN PRIVATE KEY-----\nfake-only\n-----END PRIVATE KEY-----",
+    }),
+  }));
+  assertEquals(response.status, 422);
+  assertEquals(await response.json(), {
+    error: "Unsafe memory content",
+    code: "UNSAFE_CONTENT",
+    reasons: ["secret:private_key"],
+  });
+  assertEquals(databaseCalls, 0);
+});
