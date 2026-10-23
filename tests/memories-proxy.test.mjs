@@ -11,6 +11,7 @@ const SUPABASE = "https://example-project.supabase.co";
 const MEMORY_API = "https://example-project.supabase.co/functions/v1/memory-api";
 const GOOD_TOKEN = "good-token";
 const OTHER_TOKEN = "other-user-token";
+const UNCONFIRMED_TOKEN = "unconfirmed-owner-token";
 const ID = "123e4567-e89b-42d3-a456-426614174000";
 
 let calls;
@@ -41,8 +42,10 @@ beforeEach(() => {
     calls.push({ url: href, method: opts.method || "GET", headers: opts.headers || {}, body: opts.body });
     if (href === `${SUPABASE}/auth/v1/user`) {
       const auth = opts.headers?.Authorization;
-      if (auth === `Bearer ${GOOD_TOKEN}`) return jsonResponse(200, { id: "u1", email: "OWNER@example.com" });
-      if (auth === `Bearer ${OTHER_TOKEN}`) return jsonResponse(200, { id: "u2", email: "stranger@example.com" });
+      const confirmedAt = "2026-01-01T00:00:00Z";
+      if (auth === `Bearer ${GOOD_TOKEN}`) return jsonResponse(200, { id: "u1", email: "OWNER@example.com", email_confirmed_at: confirmedAt });
+      if (auth === `Bearer ${OTHER_TOKEN}`) return jsonResponse(200, { id: "u2", email: "stranger@example.com", email_confirmed_at: confirmedAt });
+      if (auth === `Bearer ${UNCONFIRMED_TOKEN}`) return jsonResponse(200, { id: "u3", email: "owner@example.com", email_confirmed_at: null });
       return jsonResponse(401, { msg: "invalid JWT" });
     }
     return jsonResponse(200, { ok: true });
@@ -92,6 +95,12 @@ test("made-up token: Supabase says no, 401, memory API never reached", async () 
 
 test("real login, email not on the server list: 403, memory API never reached", async () => {
   const res = await call({ token: OTHER_TOKEN });
+  assert.equal(res.statusCode, 403);
+  assert.equal(memoryApiCalls().length, 0);
+});
+
+test("allowed email that was never confirmed: 403, memory API never reached", async () => {
+  const res = await call({ token: UNCONFIRMED_TOKEN });
   assert.equal(res.statusCode, 403);
   assert.equal(memoryApiCalls().length, 0);
 });

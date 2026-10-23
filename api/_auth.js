@@ -77,7 +77,10 @@ export async function requireDashboardAuth(req, res) {
     return null;
   }
   const email = String(user?.email || "").toLowerCase();
-  if (!email || !allowedEmails.includes(email)) {
+  // An unconfirmed email proves nothing: where email sign-up is on without
+  // confirmation, anyone could register the owner's address.
+  const confirmed = Boolean(user?.email_confirmed_at || user?.confirmed_at);
+  if (!email || !confirmed || !allowedEmails.includes(email)) {
     res.status(403).json({ error: "Forbidden: email not allowed" });
     return null;
   }
