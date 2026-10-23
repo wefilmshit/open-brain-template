@@ -64,3 +64,58 @@ Deno.test("unsafe add is rejected before Supabase is called", async () => {
   });
   assertEquals(databaseCalls, 0);
 });
+
+const KEY_HEADERS = { Authorization: "Bearer fixture-memory-key", "Content-Type": "application/json" };
+const UNSAFE = "-----BEGIN PRIVATE KEY-----\nfake-only\n-----END PRIVATE KEY-----";
+const stub = (globalThis as Record<string, unknown>).__supabaseStub as Record<string, unknown>;
+const refuseDatabase = stub.from;
+
+Deno.test("unsafe text in the summary alone is refused", async () => {
+  databaseCalls = 0;
+  stub.from = refuseDatabase;
+  const response = await handle(new Request("https://fixture.invalid/memory-api/add", {
+    method: "POST",
+    headers: KEY_HEADERS,
+    body: JSON.stringify({ content: "an ordinary note", summary: UNSAFE }),
+  }));
+  assertEquals(response.status, 422);
+  assertEquals(databaseCalls, 0);
+});
+
+Deno.test("/correct is checked like /add, not a way around enforce", async () => {
+  databaseCalls = 0;
+  stub.from = refuseDatabase;
+  const response = await handle(new Request("https://fixture.invalid/memory-api/correct", {
+    method: "POST",
+    headers: KEY_HEADERS,
+    body: JSON.stringify({ id: "00000000-0000-4000-8000-000000000001", content: UNSAFE }),
+  }));
+  assertEquals(response.status, 422);
+  assertEquals((await response.json()).code, "UNSAFE_CONTENT");
+  assertEquals(databaseCalls, 0);
+});
+
+Deno.test("observe: an update without metadata leaves the row's metadata alone", async () => {
+  Deno.env.set("MEMORY_WRITE_SAFETY", "observe");
+  let written: Record<string, unknown> | undefined;
+  const chain = {
+    update(values: Record<string, unknown>) { written = values; return chain; },
+    eq() { return chain; },
+    select() { return chain; },
+    single() { return Promise.resolve({ data: { id: "x" }, error: null }); },
+  };
+  stub.from = () => chain;
+  try {
+    const response = await handle(new Request("https://fixture.invalid/memory-api/update", {
+      method: "PUT",
+      headers: KEY_HEADERS,
+      body: JSON.stringify({ id: "00000000-0000-4000-8000-000000000001", content: UNSAFE }),
+    }));
+    assertEquals(response.status, 200);
+    assertEquals(written?.content, UNSAFE);
+    assertEquals("metadata" in (written || {}), false);
+  } finally {
+    Deno.env.set("MEMORY_WRITE_SAFETY", "enforce");
+    stub.from = refuseDatabase;
+  }
+});

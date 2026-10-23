@@ -154,12 +154,18 @@ async function requireAuth(req: Request): Promise<Response | null> {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function writeSafety(content: unknown, metadata: unknown) {
+// Checks the text a memory carries (content and summary together, as the MCP
+// server does). Tags and metadata are not checked.
+function writeSafety(content: unknown, summary: unknown, metadata: unknown) {
   const configured = (Deno.env.get("MEMORY_WRITE_SAFETY") || "enforce").toLowerCase();
   const mode = configured === "off" || configured === "observe" ? configured : "enforce";
-  const reasons = mode === "off" || typeof content !== "string" ? [] : unsafeReasons(content);
+  const text = [content, summary].filter((value): value is string => typeof value === "string").join("\n");
+  const reasons = mode === "off" || !text ? [] : unsafeReasons(text);
   if (mode === "observe" && reasons.length) {
     console.warn("memory write safety observed", { reasons });
+    // Tag only metadata the caller sent. An update without metadata must leave the
+    // row's existing metadata alone, not replace it with { write_safety }.
+    if (metadata === undefined) return { mode, reasons, metadata };
     return {
       mode,
       reasons,
@@ -195,7 +201,7 @@ Deno.serve(async (req) => {
         return errorResponse(req, 400, "content is required");
       }
 
-      const safety = writeSafety(content, metadata);
+      const safety = writeSafety(content, summary, metadata ?? {});
       if (safety.mode === "enforce" && safety.reasons.length) {
         return errorResponse(req, 422, "Unsafe memory content", {
           code: "UNSAFE_CONTENT",
@@ -258,7 +264,7 @@ Deno.serve(async (req) => {
       const { id, content, summary, category, tags, metadata, confirmation_status } = body;
       if (!id) return errorResponse(req, 400, "id is required");
 
-      const safety = writeSafety(content, metadata);
+      const safety = writeSafety(content, summary, metadata);
       if (safety.mode === "enforce" && safety.reasons.length) {
         return errorResponse(req, 422, "Unsafe memory content", {
           code: "UNSAFE_CONTENT",
@@ -301,6 +307,15 @@ Deno.serve(async (req) => {
         return errorResponse(req, 400, "provide content or summary");
       }
 
+      // Same write-safety check as /add and /update, so /correct is not a way around it.
+      const safety = writeSafety(content, summary, undefined);
+      if (safety.mode === "enforce" && safety.reasons.length) {
+        return errorResponse(req, 422, "Unsafe memory content", {
+          code: "UNSAFE_CONTENT",
+          reasons: safety.reasons,
+        });
+      }
+
       const { data: existing } = await supabase
         .from("memories")
         .select("id, content, summary, metadata")
@@ -321,6 +336,7 @@ Deno.serve(async (req) => {
         supersede_reason: reason || null,
         superseded_at: new Date().toISOString(),
         supersede_history: newHistory,
+        ...(safety.reasons.length ? { write_safety: safety.reasons } : {}),
       };
 
       const updates: Record<string, unknown> = { metadata: newMetadata, updated_at: new Date().toISOString() };

@@ -47,6 +47,10 @@ BEGIN
 END;
 $$;
 
+-- Trigger functions only ever run as triggers; nobody needs to call them.
+REVOKE ALL ON FUNCTION public.audit_memory_delete() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.guard_memory_mass_delete() FROM PUBLIC, anon, authenticated;
+
 DROP TRIGGER IF EXISTS memories_delete_audit ON public.memories;
 CREATE TRIGGER memories_delete_audit
 BEFORE DELETE ON public.memories
