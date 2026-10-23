@@ -10,6 +10,16 @@ Works with Claude Code, Claude Desktop, ChatGPT, Cursor, or any MCP-compatible A
 
 New to AI memory systems? Start with [Give This Repo to Your AI](docs/give-this-to-your-ai.md). It is a plain-English setup brief you can paste into Claude, ChatGPT, or Cursor so your assistant can read the repo with the right boundaries.
 
+## Security update: if you deployed the dashboard before this version
+
+Earlier versions of `api/memories.js` only checked that a sign-in token was present, never who it belonged to. Anyone with your dashboard URL could read, change and delete your memories through `/api`. Separately, a memory with a crafted category, source or file type could run script in your signed-in dashboard.
+
+After updating:
+
+1. In Vercel, set `DASHBOARD_SUPABASE_URL`, `DASHBOARD_SUPABASE_ANON_KEY` and `DASHBOARD_ALLOWED_EMAILS` (see Quick Start step 6). Until all three are set, `/api` answers 503 on purpose.
+2. Change `MEMORY_API_KEY`, both in Vercel and in your Supabase `memory-api` function settings, in case the old route was used.
+3. Look through your Vercel request logs for `/api` calls you don't recognise.
+
 ## The Problem
 
 AI agents start every session with amnesia. You re-explain your preferences, re-state your rules, re-describe your project. Notes apps and docs don't solve this because they're flat. The AI doesn't know what to read first, what's critical vs. reference, or when to load what.
