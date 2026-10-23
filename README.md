@@ -170,8 +170,11 @@ The hook script template lives at [docs/session-start-hook.md](docs/session-star
 2. Clone this repo
 3. Deploy the memory backend: apply the migration and deploy the Edge Function in [supabase/README.md](supabase/README.md) -- this is what actually stores and serves memories; the dashboard alone has nothing to talk to without it
 4. Replace `YOUR_SUPABASE_URL` and `YOUR_SUPABASE_ANON_KEY` in `index.html`
-5. Add your email to `ALLOWED_EMAILS`
-6. Deploy to [Vercel](https://vercel.com)
+5. Add your email to `ALLOWED_EMAILS` in `index.html` (this only hides the page; the real check is step 6)
+6. Deploy to [Vercel](https://vercel.com) and set these server settings in the Vercel project (Settings > Environment Variables). The dashboard's `/api` refuses every request until all of them are set:
+   - `MEMORY_API_URL` and `MEMORY_API_KEY`: your deployed `memory-api` and its key (from step 3)
+   - `DASHBOARD_SUPABASE_URL` and `DASHBOARD_SUPABASE_ANON_KEY`: the same project URL and anon key as step 4, used on the server to check each sign-in
+   - `DASHBOARD_ALLOWED_EMAILS`: comma-separated emails allowed to use the dashboard. This server list is the real gate; a signed-in Google account that is not on it gets 403, and an email that was never confirmed is refused
 7. Wire up [memory-server/](memory-server/) so Claude Code, Claude Desktop, or Cursor can read/write memories via MCP
 8. (Optional) Add the SessionStart hook for auto-loading
 9. Add Prime Radiant operating-board structure via [docs/prime-radiant.md](docs/prime-radiant.md)

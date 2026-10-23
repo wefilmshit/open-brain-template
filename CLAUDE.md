@@ -32,12 +32,16 @@ A visual brain map dashboard for AI memory systems. One database (Supabase), one
 ### Step 2: Configure the Dashboard
 - In `index.html`, replace `YOUR_SUPABASE_URL` with your Supabase project URL
 - Replace `YOUR_SUPABASE_ANON_KEY` with your Supabase anon/public key
-- Add your email to the `ALLOWED_EMAILS` array
+- Add your email to the `ALLOWED_EMAILS` array (this only hides the page; the server checks the list in Step 3)
 
 ### Step 3: Deploy to Vercel
 - Push this repo to GitHub
 - Connect to Vercel at https://vercel.com
-- Deploy (zero config needed, it's static HTML + one API route)
+- Deploy (static HTML + one API route)
+- Set these Environment Variables in the Vercel project; the `/api` route refuses every request until all are set:
+  - `MEMORY_API_URL`, `MEMORY_API_KEY`: the deployed `memory-api` Edge Function and its key
+  - `DASHBOARD_SUPABASE_URL`, `DASHBOARD_SUPABASE_ANON_KEY`: used on the server to verify each sign-in with Supabase
+  - `DASHBOARD_ALLOWED_EMAILS`: comma-separated allowed emails (the real access check; unconfirmed emails are refused)
 - Add your custom domain if desired
 
 ### Step 4: Set Up the Memory Backend
@@ -47,7 +51,9 @@ A visual brain map dashboard for AI memory systems. One database (Supabase), one
 
 ## Architecture
 - `index.html` — Single-file dashboard (HTML + CSS + JS, no build step)
-- `api/memories.js` — Vercel serverless proxy to Supabase (handles auth)
+- `api/memories.js` — Vercel serverless proxy to the memory-api; forwards only the five calls the page makes
+- `api/_auth.js` — server-side sign-in check (Supabase token + allowed email) run before every proxied call
+- `tests/` — `npm test` runs the proxy tests; `tests/dashboard-escaping.browser.mjs` checks memory fields render as text (needs Playwright)
 - `vercel.json` — Route config
 - `supabase/` — Database migration + the `memory-api` Edge Function (the actual backend; see [supabase/README.md](supabase/README.md))
 - `memory-server/` — Generic MCP server over `memory-api` (see [memory-server/README.md](memory-server/README.md))
