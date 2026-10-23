@@ -10,6 +10,16 @@ Works with Claude Code, Claude Desktop, ChatGPT, Cursor, or any MCP-compatible A
 
 New to AI memory systems? Start with [Give This Repo to Your AI](docs/give-this-to-your-ai.md). It is a plain-English setup brief you can paste into Claude, ChatGPT, or Cursor so your assistant can read the repo with the right boundaries.
 
+## Security update: if you deployed the dashboard before this version
+
+Earlier versions of `api/memories.js` only checked that a sign-in token was present, never who it belonged to. Anyone with your dashboard URL could read, change and delete your memories through `/api`. Separately, a memory with a crafted category, source or file type could run script in your signed-in dashboard.
+
+After updating:
+
+1. In Vercel, set `DASHBOARD_SUPABASE_URL`, `DASHBOARD_SUPABASE_ANON_KEY` and `DASHBOARD_ALLOWED_EMAILS` (see Quick Start step 6). Until all three are set, `/api` answers 503 on purpose.
+2. Change `MEMORY_API_KEY`, both in Vercel and in your Supabase `memory-api` function settings, in case the old route was used.
+3. Look through your Vercel request logs for `/api` calls you don't recognise.
+
 ## The Problem
 
 AI agents start every session with amnesia. You re-explain your preferences, re-state your rules, re-describe your project. Notes apps and docs don't solve this because they're flat. The AI doesn't know what to read first, what's critical vs. reference, or when to load what.
@@ -170,8 +180,11 @@ The hook script template lives at [docs/session-start-hook.md](docs/session-star
 2. Clone this repo
 3. Deploy the memory backend: apply the migration and deploy the Edge Function in [supabase/README.md](supabase/README.md) -- this is what actually stores and serves memories; the dashboard alone has nothing to talk to without it
 4. Replace `YOUR_SUPABASE_URL` and `YOUR_SUPABASE_ANON_KEY` in `index.html`
-5. Add your email to `ALLOWED_EMAILS`
-6. Deploy to [Vercel](https://vercel.com)
+5. Add your email to `ALLOWED_EMAILS` in `index.html` (this only hides the page; the real check is step 6)
+6. Deploy to [Vercel](https://vercel.com) and set these server settings in the Vercel project (Settings > Environment Variables). The dashboard's `/api` refuses every request until all of them are set:
+   - `MEMORY_API_URL` and `MEMORY_API_KEY`: your deployed `memory-api` and its key (from step 3)
+   - `DASHBOARD_SUPABASE_URL` and `DASHBOARD_SUPABASE_ANON_KEY`: the same project URL and anon key as step 4, used on the server to check each sign-in
+   - `DASHBOARD_ALLOWED_EMAILS`: comma-separated emails allowed to use the dashboard. This server list is the real gate; a signed-in Google account that is not on it gets 403, and an email that was never confirmed is refused
 7. Wire up [memory-server/](memory-server/) so Claude Code, Claude Desktop, or Cursor can read/write memories via MCP
 8. (Optional) Add the SessionStart hook for auto-loading
 9. Add Prime Radiant operating-board structure via [docs/prime-radiant.md](docs/prime-radiant.md)
