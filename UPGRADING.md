@@ -1,6 +1,6 @@
 # Upgrading an existing Open Brain install
 
-This release adds a delete guard, delete audit, literal text search, stricter API authentication and a memory-content safety check. Existing installs need the steps below.
+This release adds a delete guard, delete audit, literal text search, stricter API authentication, a memory-content safety check, and closes anon access to the core memory functions. Existing installs need the steps below.
 
 ## Apply the delete guard migration
 
@@ -28,9 +28,17 @@ scripts/run-local-sql-test.sh supabase/migrations/0002_memory_delete_guard.sql s
 
 Case-insensitive matching of non-ASCII text (for example `CAFÉ` finding `café`) follows your database's locale. Supabase's default `en_US.UTF-8` handles it; a `C` locale database folds ASCII only.
 
+## Apply the function-grant migration
+
+Apply `supabase/migrations/0004_revoke_public_function_execute.sql` after `0003`. It removes `EXECUTE` on `archive_memory`, `restore_memory` and `match_memories_basic` from `public`, `anon` and `authenticated`, and keeps it for `service_role`. Before this, Supabase's default privileges let any caller with the anon key run them. Row level security meant they saw no rows, but the grant itself should never have been there.
+
+```bash
+scripts/run-local-sql-test.sh supabase/migrations/0002_memory_delete_guard.sql supabase/migrations/0003_literal_text_search.sql supabase/migrations/0004_revoke_public_function_execute.sql tests/sql/function_grants.test.sql
+```
+
 ## Redeploy the memory API
 
-Redeploy `supabase/functions/memory-api/` after applying the migrations. The memory API now requires `0003`: without it, `/search` and keyword `/recall` return an error. Keep `MEMORY_API_KEY` set to the same private value used by your memory-server client. The client now sends that value as a Bearer token.
+Redeploy `supabase/functions/memory-api/` after applying the migrations (0002, 0003 and 0004). The memory API now requires `0003`: without it, `/search` and keyword `/recall` return an error. Keep `MEMORY_API_KEY` set to the same private value used by your memory-server client. The client now sends that value as a Bearer token.
 
 ## New settings
 

@@ -54,3 +54,5 @@ jobs:
         run: scripts/run-local-sql-test.sh supabase/migrations/0002_memory_delete_guard.sql tests/sql/memory_delete_guard.test.sql
       - name: Literal text search test
         run: scripts/run-local-sql-test.sh supabase/migrations/0002_memory_delete_guard.sql supabase/migrations/0003_literal_text_search.sql tests/sql/search_memories_text.test.sql
+      - name: Core function grants test
+        run: scripts/run-local-sql-test.sh supabase/migrations/0002_memory_delete_guard.sql supabase/migrations/0003_literal_text_search.sql supabase/migrations/0004_revoke_public_function_execute.sql tests/sql/function_grants.test.sql
