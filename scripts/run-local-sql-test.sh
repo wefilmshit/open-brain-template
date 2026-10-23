@@ -33,6 +33,13 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN CREATE ROLE service_role; END IF;
 END
 $$;
+-- Supabase's own default privileges: every new table, sequence and function in public is granted
+-- to anon, authenticated and service_role. Plain Postgres grants none of that, so without these
+-- lines a migration that forgets to revoke from anon would still pass here.
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
 SQL
 "${pg_bin}psql" -h "$host" -p "$port" -U "$user" -d "$database" -v ON_ERROR_STOP=1 \
   -f "$root/supabase/migrations/0001_open_brain_memory_core.sql"
