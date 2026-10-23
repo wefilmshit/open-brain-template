@@ -642,7 +642,8 @@ function handleSession(session) {
   if (!session) return false;
   const email = session.user?.email;
   dbg('Session found: ' + email);
-  if (!ALLOWED_EMAILS.includes(email)) {
+  // Hides the page only. The server checks DASHBOARD_ALLOWED_EMAILS on every /api call.
+  if (!ALLOWED_EMAILS.map(e => String(e).toLowerCase()).includes((email || "").toLowerCase())) {
     dbg('Email NOT in allowlist');
     sb.auth.signOut();
     return false;
@@ -751,9 +752,9 @@ async function bmSearch() {
       return `
       <div class="memory-card" data-id="${escHtml(m.id || "")}" onclick="toggleCard(event, this)">
         <div class="meta">
-          <span class="category ${catClass(m.category)}">${m.category || "unknown"}</span>
+          <span class="category ${escAttr(catClass(m.category))}">${escHtml(m.category || "unknown")}</span>
           <span class="date">${formatDate(m.created_at)}</span>
-          <span class="source">${m.source || ""}</span>
+          <span class="source">${escHtml(m.source || "")}</span>
         </div>
         <div class="summary">${escHtml(m.summary || "(no summary)")}</div>
         <div class="content">${escHtml(m.content || "")}</div>
@@ -908,7 +909,7 @@ function renderFileCard(f) {
     <div class="file-card" data-id="${escHtml(f.id)}" onclick="toggleCard(event, this)">
       <div class="file-meta">
         <span class="file-name">${escHtml(name)}</span>
-        <span class="file-type type-${fileType}">${fileType}</span>
+        <span class="file-type type-${escAttr(String(fileType))}">${escHtml(fileType)}</span>
         <span style="font-size:0.65rem;color:var(--text2);margin-left:auto;">${escHtml(fileName)}</span>
       </div>
       <div class="file-desc">${escHtml(desc)}</div>
@@ -1238,7 +1239,7 @@ function bmRenderLeaf(m) {
     <div class="bm-leaf-summary">${escHtml(m.summary || "(no summary)")}</div>
     <div class="bm-leaf-meta">
       <span class="bm-leaf-date">${formatDate(m.created_at)}</span>
-      <span class="bm-leaf-source">${m.source || ""}</span>
+      <span class="bm-leaf-source">${escHtml(m.source || "")}</span>
     </div>
     <div class="bm-leaf-content">${escHtml(m.content || "")}</div>
     <div class="bm-leaf-actions">
@@ -1412,7 +1413,7 @@ async function loadTree() {
     for (const m of all) { const c = m.category || "general"; catCounts[c] = (catCounts[c] || 0) + 1; }
     document.getElementById("bm-dots").innerHTML = Object.entries(catCounts)
       .sort((a, b) => b[1] - a[1])
-      .map(([cat, count]) => `<span class="bm-dot-legend"><span class="dot" style="background:${CAT_COLORS[cat] || "#8888a0"}"></span>${cat} ${count}</span>`)
+      .map(([cat, count]) => `<span class="bm-dot-legend"><span class="dot" style="background:${CAT_COLORS[cat] || "#8888a0"}"></span>${escHtml(cat)} ${count}</span>`)
       .join("");
 
     const memFiles = all.filter(m => m.category === "memory-file");
@@ -1483,7 +1484,7 @@ async function loadTree() {
       const mems = byCat[cat];
       const color = CAT_COLORS[cat] || "#8888a0";
       const emoji = CAT_EMOJI[cat] || "⚪";
-      const panelId = `panel-cat-${cat}`;
+      const panelId = `panel-cat-${String(cat).replace(/[^a-zA-Z0-9]+/g, "-")}`;
       const label = catLabels[cat] || cat.toUpperCase();
       tier3Nodes += bmNode(emoji, label, color, mems.length, panelId, `${mems.length} ${cat} memories`);
       let panelContent = "";
