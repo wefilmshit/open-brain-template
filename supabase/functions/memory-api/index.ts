@@ -16,7 +16,6 @@
 // confirmation_status. See docs/self-hosting-fixes.md if you want one.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { buildTextSearchFilter } from "./search_filter.ts";
 import { unsafeReasons } from "./write_safety.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -417,19 +416,17 @@ Deno.serve(async (req) => {
 
     // ── SEARCH (dashboard keyword search) ──────────────────────────────
     // Per README.md: dashboard search is intentionally keyword search
-    // unless you wire and prove semantic search separately. This does an
-    // ILIKE match over content/summary/tags; no embedding call.
+    // unless you wire and prove semantic search separately. This does a
+    // literal, case-insensitive substring match over content and summary
+    // (public.search_memories_text, migration 0003); no embedding call.
     if (req.method === "GET" && path === "/search") {
       const q = (url.searchParams.get("q") || "").trim();
       const limit = Math.min(Number(url.searchParams.get("limit")) || SEARCH_MAX_RESULTS, SEARCH_MAX_RESULTS);
       if (!q) return errorResponse(req, 400, "query is required");
 
-      const { data, error } = await supabase
-        .from("memories")
-        .select("id, content, summary, category, source, tags, metadata, confirmation_status, created_at, updated_at")
-        .or(buildTextSearchFilter(q))
-        .order("created_at", { ascending: false })
-        .limit(limit);
+      // Literal substring match in SQL (migration 0003): no pattern syntax, so `*`, `%`,
+      // `_` and every other character in q match only themselves.
+      const { data, error } = await supabase.rpc("search_memories_text", { q, lim: limit });
       if (error) throw error;
       return json(req, { results: data, count: data.length });
     }
@@ -458,14 +455,11 @@ Deno.serve(async (req) => {
         rows = data || [];
       } else {
         if (!query) return errorResponse(req, 400, "query is required (or pass embedding)");
-        let q = supabase
-          .from("memories")
-          .select("id, content, summary, category, source, tags, metadata, confirmation_status, created_at, updated_at")
-          .or(buildTextSearchFilter(query))
-          .order("created_at", { ascending: false })
-          .limit(RECALL_MAX_RESULTS_HARD);
-        if (category) q = q.eq("category", category);
-        const { data, error } = await q;
+        const { data, error } = await supabase.rpc("search_memories_text", {
+          q: query,
+          lim: RECALL_MAX_RESULTS_HARD,
+          filter_category: category,
+        });
         if (error) throw error;
         rows = data || [];
       }

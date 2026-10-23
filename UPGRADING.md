@@ -14,9 +14,23 @@ scripts/run-local-sql-test.sh supabase/migrations/0002_memory_delete_guard.sql t
 
 The migration records every deleted memory in `public.memory_delete_audit`. It blocks a statement that deletes more than 25 memories unless that transaction explicitly enables the override.
 
+## Apply the literal text search migration
+
+Apply `supabase/migrations/0003_literal_text_search.sql` after `0002`, the same way. It adds `public.search_memories_text`, which `/search` and the keyword path of `/recall` now call. Only `service_role` (the role memory-api uses) may execute it; `anon` and `authenticated` are refused.
+
+Why: the earlier search used PostgREST's `ilike` filter, and PostgREST turns `*` into a wildcard inside that pattern even when it is quoted or escaped. A search for `*` returned every memory. The new function matches plain substrings in SQL, so no character in a search can widen it. A blank search returns nothing.
+
+Verify locally with:
+
+```bash
+scripts/run-local-sql-test.sh supabase/migrations/0002_memory_delete_guard.sql supabase/migrations/0003_literal_text_search.sql tests/sql/search_memories_text.test.sql
+```
+
+Case-insensitive matching of non-ASCII text (for example `CAFÉ` finding `café`) follows your database's locale. Supabase's default `en_US.UTF-8` handles it; a `C` locale database folds ASCII only.
+
 ## Redeploy the memory API
 
-Redeploy `supabase/functions/memory-api/` after applying the migration. Keep `MEMORY_API_KEY` set to the same private value used by your memory-server client. The client now sends that value as a Bearer token.
+Redeploy `supabase/functions/memory-api/` after applying the migrations. The memory API now requires `0003`: without it, `/search` and keyword `/recall` return an error. Keep `MEMORY_API_KEY` set to the same private value used by your memory-server client. The client now sends that value as a Bearer token.
 
 ## New settings
 

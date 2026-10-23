@@ -26,7 +26,6 @@ let databaseCalls = 0;
 };
 
 const handlerUrl = new URL("./index.ts", import.meta.url);
-const searchFilterUrl = new URL("./search_filter.ts", import.meta.url).href;
 const writeSafetyUrl = new URL("./write_safety.ts", import.meta.url).href;
 const source = await Deno.readTextFile(handlerUrl);
 const marker = "Deno.serve(async (req) => {";
@@ -36,7 +35,6 @@ const testSource = source
     'import { createClient } from "https://esm.sh/@supabase/supabase-js@2";',
     "const createClient = () => (globalThis as Record<string, unknown>).__supabaseStub as any;",
   )
-  .replace('from "./search_filter.ts"', `from "${searchFilterUrl}"`)
   .replace('from "./write_safety.ts"', `from "${writeSafetyUrl}"`)
   .replace(marker, "export const capturedHandler = async (req: Request) => {")
   .replace(/\n\}\);\s*$/, "\n};\n");

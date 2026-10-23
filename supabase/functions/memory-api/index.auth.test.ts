@@ -9,10 +9,6 @@ const source = await Deno.readTextFile(handlerUrl);
 const marker = "Deno.serve(async (req) => {";
 if (source.split(marker).length !== 2) throw new Error("Expected exactly one Deno.serve handler");
 const testSource = source
-  .replace('import { buildTextSearchFilter } from "./search_filter.ts";', `
-function buildTextSearchFilter(q: string): string {
-  return \`content.ilike."%\${q}%",summary.ilike."%\${q}%"\`;
-}`)
   .replace('import { unsafeReasons } from "./write_safety.ts";', `
 function unsafeReasons(_text: string): string[] {
   return [];

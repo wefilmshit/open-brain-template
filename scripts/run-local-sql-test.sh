@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 2 ]]; then
-  echo "usage: $0 <migration.sql> <test.sql>" >&2
+if [[ $# -lt 2 ]]; then
+  echo "usage: $0 <migration.sql>... <test.sql>" >&2
   exit 64
 fi
 
@@ -15,8 +15,8 @@ host=${PGHOST:-127.0.0.1}
 port=${PGPORT:-55432}
 user=${PGUSER:-postgres}
 database="ob1_template_test_${$}"
-migration=$1
-test_sql=$2
+migrations=("${@:1:$#-1}")
+test_sql=${!#}
 root=$(cd "$(dirname "$0")/.." && pwd)
 
 cleanup() {
@@ -36,5 +36,7 @@ $$;
 SQL
 "${pg_bin}psql" -h "$host" -p "$port" -U "$user" -d "$database" -v ON_ERROR_STOP=1 \
   -f "$root/supabase/migrations/0001_open_brain_memory_core.sql"
-"${pg_bin}psql" -h "$host" -p "$port" -U "$user" -d "$database" -v ON_ERROR_STOP=1 -f "$migration"
+for migration in "${migrations[@]}"; do
+  "${pg_bin}psql" -h "$host" -p "$port" -U "$user" -d "$database" -v ON_ERROR_STOP=1 -f "$migration"
+done
 "${pg_bin}psql" -h "$host" -p "$port" -U "$user" -d "$database" -v ON_ERROR_STOP=1 -f "$test_sql"
