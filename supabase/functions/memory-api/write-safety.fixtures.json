@@ -53,6 +53,48 @@
       "reasons": [
         "size:over_limit"
       ]
+    },
+    {
+      "text": "token sk\u002dFFFFFFFFFFFFFFFFFFFFFFFF",
+      "reasons": [
+        "secret:openai_key"
+      ]
+    },
+    {
+      "text": "OPENAI_API_KEY=sk\u002dproj-GGGGGGGGGGGGGGGGGGGGGGGG",
+      "reasons": [
+        "secret:openai_key"
+      ]
+    },
+    {
+      "text": "{\"key\":\"sk\u002dHHHHHHHHHHHHHHHHHHHHHHHH\"}",
+      "reasons": [
+        "secret:openai_key"
+      ]
+    },
+    {
+      "text": "first line\nsk\u002dJJJJJJJJJJJJJJJJJJJJJJJJ",
+      "reasons": [
+        "secret:openai_key"
+      ]
+    },
+    {
+      "text": "run `sk\u002dKKKKKKKKKKKKKKKKKKKKKKKK`",
+      "reasons": [
+        "secret:openai_key"
+      ]
+    },
+    {
+      "text": "env KEY_sk\u002dLLLLLLLLLLLLLLLLLLLLLLLL",
+      "reasons": [
+        "secret:openai_key"
+      ]
+    },
+    {
+      "text": "sk\u002dproj-MMMMMMMMMMMMMMMMMMMMMMMM",
+      "reasons": [
+        "secret:openai_key"
+      ]
     }
   ],
   "safe": [
@@ -62,6 +104,11 @@
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     "send the Bearer token in the header",
     "the eyJ prefix means JWT",
-    "User: one\nAssistant: two\nUser: three\nAssistant: four\nUser: five\nAssistant: six\nUser: seven"
+    "User: one\nAssistant: two\nUser: three\nAssistant: four\nUser: five\nAssistant: six\nUser: seven",
+    "see zz-agent-response-to-zz-disk-guard-is-25-not-100-20261029T2158-EDT.md",
+    "see zz-agent-prompt-for-zz-reel-desk-layout-and-spacing-check-20261030T0900-EDT.md",
+    "zz-task-list-for-the-reel-handoff-20261101T1200",
+    "zz-risk-register-for-the-job-flow-cleanup-20261101",
+    "please ask-the-producer-about-the-shoot-window-first"
   ]
 }
