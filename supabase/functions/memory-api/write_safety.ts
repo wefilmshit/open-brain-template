@@ -1,5 +1,6 @@
 const ANTHROPIC_KEY = /sk-ant-[A-Za-z0-9_-]{20,}/;
-const OPENAI_KEY = /sk-(?:proj-)?[A-Za-z0-9_-]{20,}/;
+// A letter or digit right before "sk-" means a word like "disk-" or "task-", not a key.
+const OPENAI_KEY = /(?<![A-Za-z0-9])sk-(?:proj-)?[A-Za-z0-9_-]{20,}/;
 const JWT = /eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/;
 const PRIVATE_KEY = /-----BEGIN [A-Z ]*PRIVATE KEY-----/;
 const AWS_ACCESS_KEY = /AKIA[0-9A-Z]{16}/;
